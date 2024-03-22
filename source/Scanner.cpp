@@ -1,4 +1,5 @@
 #include "headers/Scanner.hpp"
+#include "headers/Loxpp.hpp"
 
 std::vector<Token> &Scanner::scanTokens()
 {
@@ -62,6 +63,7 @@ void Scanner::scanToken()
 
     // Unrecognized character
     default:
+        Loxpp::error(line, "Unexpected character.");
         break;
     }
 }

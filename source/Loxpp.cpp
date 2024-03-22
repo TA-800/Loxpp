@@ -1,44 +1,14 @@
-
-#include <cstdlib>
-#include <fstream>
-#include <iostream>
-#include <string>
-#include <vector>
-
+#include "headers/Loxpp.hpp"
 #include "headers/Scanner.hpp"
 #include "headers/Token.hpp"
+#include <fstream>
+#include <iostream>
+#include <vector>
 
-void run(const std::string &source);
-void runPrompt();
-void runFile(const std::string &path);
-void report(int line, const std::string &where, const std::string &message);
+// Static variable initialization
+bool Loxpp::hadError = false;
 
-// Global variable to track if an error has occurred
-bool hadError = false;
-
-int main(int argc, char *argv[])
-{
-
-    // Check if we are running a script or an interactive session
-    if (argc > 1)
-    {
-        std::cout << "Usage: loxpp [script]"
-                  << "\n";
-        exit(64);
-    }
-    // Script
-    else if (argc == 1)
-    {
-        runFile(argv[1]);
-    }
-    // Interactive session
-    else
-    {
-        runPrompt();
-    }
-}
-
-void runFile(const std::string &path)
+int Loxpp::runFile(const std::string &path)
 {
     // Reference: https://stackoverflow.com/a/50317432
     // Iterate through the file in binary mode
@@ -49,18 +19,24 @@ void runFile(const std::string &path)
 
     file.close();
 
-    // Create string from bytes vector (specify begin and end of vector) and pass to run
+    // Get source code from input read
+    // Create string from bytes
+    // Run the source code
     run(std::string(bytes.begin(), bytes.end()));
 
-    // If error
+    // If error (can be set by run() if error occurs)
     if (hadError)
     {
         // 65 -> indicates error
-        exit(65);
+        return 65;
     }
+
+    // 0 -> indicates success
+    return 0;
 }
 
-void runPrompt()
+// Interactive session
+void Loxpp::runPrompt()
 {
 
     std::string line;
@@ -81,7 +57,8 @@ void runPrompt()
     }
 }
 
-void run(const std::string &source)
+// Run the source code
+int Loxpp::run(const std::string &source)
 {
     Scanner scanner(source);
     std::vector<Token> tokens = scanner.scanTokens();
@@ -91,14 +68,19 @@ void run(const std::string &source)
     {
         std::cout << token.toString() << "\n";
     }
+
+    return 0;
 }
 
-void error(int line, const std::string &message)
+// Error handling
+void Loxpp::error(int line, const std::string &message)
 {
+    // For now, where is empty
     report(line, "", message);
 }
 
-void report(int line, const std::string &where, const std::string &message)
+// Will set hadError to true
+void Loxpp::report(int line, const std::string &where, const std::string &message)
 {
     std::cerr << "[line " << line << "] Error" << where << ": " << message << "\n";
     hadError = true;
