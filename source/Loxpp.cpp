@@ -5,7 +5,7 @@
 #include <iostream>
 #include <vector>
 
-// Static variable initialization
+// Everything is static in this class
 bool Loxpp::hadError = false;
 
 int Loxpp::runFile(const std::string &path)
