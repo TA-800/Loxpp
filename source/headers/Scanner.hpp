@@ -72,6 +72,8 @@ class Scanner
      */
     void string();
 
+    void multiLineComment();
+
     /*
      * Recognize numbers. Similar to string and comment.
      */

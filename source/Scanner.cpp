@@ -1,6 +1,7 @@
 #include "headers/Scanner.hpp"
 #include "headers/Loxpp.hpp"
 #include <cctype>
+#include <iostream>
 #include <string>
 
 std::vector<Token> &Scanner::scanTokens()
@@ -94,11 +95,19 @@ void Scanner::scanToken()
                 // Just simply advance the current pointer
                 advance();
         }
+        // Multi-line comment
+        else if (match('*'))
+        {
+            std::cout << "Multi-line comment"
+                      << "\n";
+            multiLineComment();
+        }
         // Division
         else
         {
             addToken(TokenInfo::Type::SLASH);
         }
+        break;
 
     // Ignore whitespace. This will end loop and move to next lexeme in the outer while loop.
     case ' ':
@@ -242,6 +251,30 @@ void Scanner::freeTokens()
     {
         token.freeLiteral();
     }
+}
+
+void Scanner::multiLineComment()
+{
+
+    while (peek() != '*' && peekNext() != '/')
+    {
+
+        if (isAtEnd())
+        {
+            Loxpp::error(line, "Unterminated multi-line comment.");
+            return;
+        }
+
+        if (peek() == '\n')
+            line++;
+
+        advance();
+    }
+
+    // Consume the '*'
+    // Consume the '/'
+    advance();
+    advance();
 }
 
 bool Scanner::isAlpha(char c)
