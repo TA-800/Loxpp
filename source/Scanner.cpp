@@ -1,5 +1,7 @@
 #include "headers/Scanner.hpp"
 #include "headers/Loxpp.hpp"
+#include <cctype>
+#include <string>
 
 std::vector<Token> &Scanner::scanTokens()
 {
@@ -30,7 +32,6 @@ bool Scanner::isAtEnd()
 void Scanner::scanToken()
 {
 
-    // Begin with single character lexemes that could be tokens
     char c = advance();
 
     switch (c)
@@ -116,7 +117,14 @@ void Scanner::scanToken()
 
     // Unrecognized character
     default:
-        Loxpp::error(line, "Unexpected character.");
+        if (isdigit(c))
+        {
+            number();
+        }
+        else
+        {
+            Loxpp::error(line, "Unexpected character.");
+        }
         break;
     }
 }
@@ -133,7 +141,8 @@ void Scanner::addToken(TokenInfo::Type type)
 
 void Scanner::addToken(TokenInfo::Type type, void *literal)
 {
-    std::string text = source.substr(start, current);
+    // substr ( start, len )
+    std::string text = source.substr(start, current - start);
     tokens.push_back(Token(type, text, literal, line));
 }
 
@@ -154,6 +163,16 @@ char Scanner::peek()
 
     // Return the next character
     return source[current];
+}
+
+char Scanner::peekNext()
+{
+    // If we are at the end of the source code
+    if (current + 1 >= source.length())
+        return '\0';
+
+    // Return the next character
+    return source[current + 1];
 }
 
 void Scanner::string()
@@ -183,9 +202,34 @@ void Scanner::string()
     // Remove surrounding quotes to add purely the string value to tokens
 
     // Create string in memory
-    std::string str = source.substr(start + 1, current - 2);
+    // substr ( start, len )
+    std::string str = source.substr(start + 1, current - (start + 1) - 1);
     void *string = new std::string(str);
     addToken(TokenInfo::Type::STRING, string);
+}
+
+void Scanner::number()
+{
+    // Keep consuming (moving current forward) until we find something not a digit
+    while (isdigit(peek()))
+        advance();
+
+    // If we encounter decimal point and next char after is digit,
+    // then continue consumption until we find something not a digit
+    if (isdigit(peek()) == '.' && isdigit(peekNext()))
+    {
+        // Consume the '.'
+        advance();
+
+        // Consume the digit after the '.'
+        while (isdigit(peek()))
+            advance();
+    }
+
+    // Parse string into double and store in tokens
+    // Create pointer to a double that has value of string converted to double
+    void *number = new double(std::stod(source.substr(start, current)));
+    addToken(TokenInfo::Type::NUMBER, number);
 }
 
 void Scanner::freeTokens()

@@ -63,12 +63,18 @@ class Scanner
      * For input.
      */
     char peek();
+    char peekNext();
 
     /*
      * Recognize string literals. Similar to how characters in a comment are continuously being consumed without being
      * saved anywhere to reach end of comment.
      */
     void string();
+
+    /*
+     * Recognize numbers. Similar to string and comment.
+     */
+    void number();
 
   public:
     Scanner(const std::string &source) : source(source)

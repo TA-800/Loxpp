@@ -17,7 +17,7 @@ std::string Token::toString() const
 
         else if (type == TokenInfo::Type::NUMBER)
         {
-            int num = *(static_cast<int *>(literal));
+            double num = *(static_cast<double *>(literal));
             result += std::to_string(num);
         }
         else
@@ -39,7 +39,7 @@ void Token::freeLiteral()
         }
         else if (type == TokenInfo::Type::NUMBER)
         {
-            delete static_cast<int *>(literal);
+            delete static_cast<double *>(literal);
         }
     }
 }
