@@ -256,13 +256,32 @@ void Scanner::freeTokens()
 void Scanner::multiLineComment()
 {
 
-    while (peek() != '*' && peekNext() != '/')
-    {
+    int nesting = 1;
 
-        if (isAtEnd())
+    while (!isAtEnd())
+    {
+        if (peek() == '*' && peekNext() == '/')
         {
-            Loxpp::error(line, "Unterminated multi-line comment.");
-            return;
+            nesting--;
+
+            if (nesting == 0)
+            {
+                // Consume the '*'
+                // Consume the '/'
+                advance();
+                advance();
+                return;
+            }
+        }
+
+        if (peek() == '/' && peekNext() == '*')
+        {
+            nesting++;
+            // Consume the '/'
+            // Consume the '*'
+            advance();
+            advance();
+            continue;
         }
 
         if (peek() == '\n')
@@ -271,10 +290,9 @@ void Scanner::multiLineComment()
         advance();
     }
 
-    // Consume the '*'
-    // Consume the '/'
-    advance();
-    advance();
+    // Unterminated multi-line comment
+    Loxpp::error(line, nesting == 1 ? "Unterminated multi-line comment." : "Unterminated nested multi-line comment");
+    return;
 }
 
 bool Scanner::isAlpha(char c)
