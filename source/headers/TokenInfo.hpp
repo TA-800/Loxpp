@@ -63,4 +63,6 @@ class TokenInfo
     };
 
     static std::string getTypeString(Type type);
+
+    static TokenInfo::Type getKeywordOrIdentifier(std::string &text);
 };

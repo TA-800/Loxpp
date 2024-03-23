@@ -1,4 +1,5 @@
 #include "headers/TokenInfo.hpp"
+#include <algorithm>
 #include <string>
 #include <vector>
 
@@ -25,4 +26,24 @@ const std::vector<std::string> TokenInfo::TypeStrings = {
 std::string TokenInfo::getTypeString(Type type)
 {
     return TypeStrings[type];
+}
+
+TokenInfo::Type TokenInfo::getKeywordOrIdentifier(std::string &type)
+{
+    for (int i = 0; i < TypeStrings.size(); i++)
+    {
+        // Lowercase the string from TypeStrings vector.
+        std::string lower = TypeStrings[i];
+        std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+        // If the string from TypeStrings vector matches the input string, return the corresponding Type.
+        if (lower == type)
+        {
+            // Cast i to to a Type enum.
+            return static_cast<TokenInfo::Type>(i);
+        }
+    }
+
+    // If no match is found, return IDENTIFIER.
+    return TokenInfo::Type::IDENTIFIER;
 }

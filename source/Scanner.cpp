@@ -121,6 +121,10 @@ void Scanner::scanToken()
         {
             number();
         }
+        else if (isAlpha(c))
+        {
+            identifier();
+        }
         else
         {
             Loxpp::error(line, "Unexpected character.");
@@ -238,4 +242,26 @@ void Scanner::freeTokens()
     {
         token.freeLiteral();
     }
+}
+
+bool Scanner::isAlpha(char c)
+{
+    return isalpha(c) || c == '_';
+}
+
+bool Scanner::isAlphaNumeric(char c)
+{
+    return isAlpha(c) || isdigit(c);
+}
+
+void Scanner::identifier()
+{
+    // Keep consuming until we find something not an alphanumeric character
+    while (isAlphaNumeric(peek()))
+        advance();
+
+    // Check if current lexeme between start & current is a reserved keyword with TokenInfo typeString
+    std::string text = source.substr(start, current - start);
+    TokenInfo::Type type = TokenInfo::getKeywordOrIdentifier(text);
+    addToken(type);
 }

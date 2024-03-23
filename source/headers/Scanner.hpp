@@ -37,7 +37,8 @@ class Scanner
     char advance();
 
     /*
-     * Add token to vector of tokens.
+     * When this is called, tell the scanner to add to its token vector whatever falls between start and current
+     * pointers at the moment.
      * For output.
      */
     void addToken(TokenInfo::Type type);
@@ -75,6 +76,15 @@ class Scanner
      * Recognize numbers. Similar to string and comment.
      */
     void number();
+
+    /*
+     * Recognize identifiers and keywords.
+     */
+    void identifier();
+    // Letters or underscores
+    bool isAlpha(char c);
+    // Letters, underscores, or digits
+    bool isAlphaNumeric(char c);
 
   public:
     Scanner(const std::string &source) : source(source)
