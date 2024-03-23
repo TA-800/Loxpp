@@ -30,7 +30,8 @@ std::string TokenInfo::getTypeString(Type type)
 
 TokenInfo::Type TokenInfo::getKeywordOrIdentifier(std::string &type)
 {
-    for (int i = 0; i < TypeStrings.size(); i++)
+    // From "and" to "while"
+    for (int i = 22; i < 38; i++)
     {
         // Lowercase the string from TypeStrings vector.
         std::string lower = TypeStrings[i];
