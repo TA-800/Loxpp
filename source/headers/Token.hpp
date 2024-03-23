@@ -12,7 +12,8 @@ class Token
     const std::string lexeme;
     // The value held by the token. Keywords do not have a literal value.
     // The only way to dereference a void pointer is to cast it to another type first.
-    void *literal = nullptr;
+    void *literal;
+
     // The line number where the token is present.
     const int line;
 
@@ -33,6 +34,8 @@ class Token
     // Don't return a reference because a reference comes from the function, and once the function is done being used,
     // the function is "destroyed" and the reference that came from it is now invalid.
     std::string toString() const;
+
+    void freeLiteral();
 };
 
 #endif // !TOKEN_HPP

@@ -38,7 +38,6 @@ int Loxpp::runFile(const std::string &path)
 // Interactive session
 void Loxpp::runPrompt()
 {
-
     std::string line;
 
     while (true)
@@ -58,7 +57,7 @@ void Loxpp::runPrompt()
 }
 
 // Run the source code
-int Loxpp::run(const std::string &source)
+void Loxpp::run(const std::string &source)
 {
     Scanner scanner(source);
     std::vector<Token> tokens = scanner.scanTokens();
@@ -69,7 +68,8 @@ int Loxpp::run(const std::string &source)
         std::cout << token.toString() << "\n";
     }
 
-    return 0;
+    // Free memory (to avoid memory leaks because we are using new with void *)
+    scanner.freeTokens();
 }
 
 // Error handling
