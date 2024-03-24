@@ -1,6 +1,7 @@
 #ifndef LOXPP_HPP
 #define LOXPP_HPP
 
+#include "Token.hpp"
 #include <string>
 
 class Loxpp
@@ -20,6 +21,7 @@ class Loxpp
      * Main will exit with this error code */
     static int runFile(const std::string &path);
 
+    static void error(const Token &token, const std::string &message);
     static void error(int line, const std::string &message);
     static void report(int line, const std::string &where, const std::string &message);
 };

@@ -73,6 +73,18 @@ void Loxpp::run(const std::string &source)
 }
 
 // Error handling
+void Loxpp::error(const Token &token, const std::string &message)
+{
+    if (token.getType() == TokenInfo::Type::END_OF_FILE)
+    {
+        report(token.getLine(), " at end", message);
+    }
+    else
+    {
+        report(token.getLine(), " at '" + token.getLexeme() + "'", message);
+    }
+}
+
 void Loxpp::error(int line, const std::string &message)
 {
     // For now, where is empty
