@@ -35,6 +35,24 @@ class Token
     // the function is "destroyed" and the reference that came from it is now invalid.
     std::string toString() const;
 
+    // Getters
+    TokenInfo::Type getType() const
+    {
+        return type;
+    }
+    const std::string &getLexeme() const
+    {
+        return lexeme;
+    }
+    const void *getLiteral() const
+    {
+        return literal;
+    }
+    const int getLine() const
+    {
+        return line;
+    }
+
     void freeLiteral();
 };
 

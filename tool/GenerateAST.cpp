@@ -5,7 +5,7 @@
 
 void defineAst(std::string &outputDir, const char *baseName, const std::vector<std::string> &types);
 void defineType(std::ofstream &headerFile, const char *baseName, const std::string &className,
-                const std::string fieldList);
+                const std::string &fieldList);
 
 /*
  * It is tedious to write all the Expr subclasses that represent the AST nodes.
@@ -49,12 +49,14 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
     headerFile << "#include \"Token.hpp\"" << std::endl;
 
     // Start of abstract class definition
+    headerFile << "template <typename T>" << std::endl;
     headerFile << "class " << baseName << "{" << std::endl;
 
     // Define the public section of the class
     // destructor = default
     headerFile << "public:" << std::endl;
     headerFile << "virtual ~" << baseName << "() = default;" << std::endl;
+    headerFile << "virtual T accept(Visitor<T> visitor) = 0;" << std::endl;
 
     // End of abstract class definition
     headerFile << "};" << std::endl;
@@ -81,7 +83,7 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
 }
 
 void defineType(std::ofstream &headerFile, const char *baseName, const std::string &className,
-                const std::string fieldList)
+                const std::string &fieldList)
 {
     // Write class definition
     // E.g. Binary : Expr left, Token op, Expr right
