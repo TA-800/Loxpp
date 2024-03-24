@@ -4,23 +4,28 @@
 class AstPrinter : public Visitor
 {
     // Some return type that can be get( )-ed and printed
-    std::string result;
+    std::string result = "";
 
   public:
     // Return a string representation of the expression
-    std::string setPrintResult(const std::unique_ptr<Expr> &expr)
+    void setPrintResult(const std::unique_ptr<Expr> &expr)
     {
         expr->accept(*this);
-        return result;
     }
 
     void visitBinaryExpr(const Binary *expr) override
     {
         // Call print again on the left and right expressions to recursively print them if they are also other types of
         // expressions. E.g. ( 2 + 3 ) + 4 where 2 + 3 is also a binary expression
+        result += "( " + expr->op.getLexeme();
 
-        result +=
-            "( " + expr->op.getLexeme() + " " + setPrintResult(expr->left) + " " + setPrintResult(expr->right) + " )";
+        // Left expression
+        setPrintResult(expr->left);
+
+        // Print the right expression
+        setPrintResult(expr->right);
+
+        result += " )";
 
         // result for 2 + 3 = ( + 2 3 )
         // result for ( 2 + 3 ) + 4 = ( + ( + 2 3 ) 4 )
@@ -28,7 +33,9 @@ class AstPrinter : public Visitor
 
     void visitUnaryExpr(const Unary *expr) override
     {
-        result += "( " + expr->op.getLexeme() + " " + setPrintResult(expr->right) + " )";
+        result += "( " + expr->op.getLexeme() + " ";
+        setPrintResult(expr->right);
+        result += " )";
     }
 
     void visitLiteralExpr(const Literal *expr) override
@@ -48,13 +55,15 @@ class AstPrinter : public Visitor
         else if (expr->type == TokenInfo::Type::NUMBER)
         {
             // Cast to int then convert to string to print
-            result += "( " + std::to_string(*static_cast<int *>(expr->value)) + " )";
+            result += " " + std::to_string(*static_cast<double *>(expr->value)) + " ";
         }
     }
 
     void visitGroupingExpr(const Grouping *expr) override
     {
-        result += "( group " + setPrintResult(expr->expression) + " )";
+        result += "( group ";
+        setPrintResult(expr->expression);
+        result += " )";
     }
 
     // Return the result
@@ -70,12 +79,20 @@ int main(int argc, char *argv[])
     // Create AstPrinter
     AstPrinter printer;
 
-    // Create Expr = -123 * (45.67) -> Binary ( Unary (-, 123), *, Grouping ( Literal (45.67) ) )
+    // Create Expr = -123 * 45.67 -> Binary ( Unary (-, 123), *, 45.67 )
+    // -> ( * ( - 123 ) 45.67 )
     std::unique_ptr<Expr> binary = std::make_unique<Binary>(
         std::make_unique<Unary>(Token(TokenInfo::MINUS, "-", nullptr, 1),
-                                std::make_unique<Literal>(new int(123), TokenInfo::Type::NUMBER)),
+                                std::make_unique<Literal>((void *)new double(123), TokenInfo::Type::NUMBER)),
         Token(TokenInfo::STAR, "*", nullptr, 1),
-        std::make_unique<Grouping>(std::make_unique<Literal>(new std::string("45.67"), TokenInfo::Type::STRING)));
+        std::make_unique<Literal>((void *)new double(45.67), TokenInfo::Type::NUMBER));
+
+    // Very simple expression: 2 + 3 -> Binary ( +, 2, 3)
+    // -> ( + 2 3 )
+    /* std::unique_ptr<Expr> binary = */
+    /*     std::make_unique<Binary>(std::make_unique<Literal>((void *)new double(2), TokenInfo::Type::NUMBER), */
+    /*                              Token(TokenInfo::PLUS, "+", nullptr, 1), */
+    /*                              std::make_unique<Literal>((void *)new double(3), TokenInfo::Type::NUMBER)); */
 
     // In the Printer class, set the print result to the binary expression
     printer.setPrintResult(binary);
