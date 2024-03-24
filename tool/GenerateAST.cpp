@@ -16,7 +16,7 @@ int main(int argc, char *argv[])
 
     /* if (argc != 2) */
     /* { */
-    /*     std::cerr << "Usage: GenerateAST <output directory>" << std::endl; */
+    /*     std::cerr << "Usage: GenerateAST <output directory>" << "\n"; */
     /*     return 64; */
     /* } */
 
@@ -24,8 +24,10 @@ int main(int argc, char *argv[])
     /* std::string outputDir = argv[1]; */
     std::string outputDir = "source/headers";
     const char *baseName = "Expr";
-    const std::vector<std::string> types = {"Binary   : Expr left, Token op, Expr right", "Grouping : Expr expression",
-                                            "Literal  : void *value", "Unary    : Token op, Expr right"};
+    const std::vector<std::string> types = {
+        "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
+        "Grouping : std::unique_ptr<Expr> expression", "Literal  : void *value",
+        "Unary    : Token op, std::unique_ptr<Expr> right"};
     defineAst(outputDir, baseName, types);
 };
 
@@ -37,46 +39,82 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
     std::ofstream headerFile(outputDir + "/" + baseName + ".hpp");
     if (!headerFile)
     {
-        std::cerr << "Could not open file for writing" << std::endl;
+        std::cerr << "Could not open file for writing"
+                  << "\n";
         return;
     }
 
-    // Include guard
-    headerFile << "#ifndef " << baseName << "_HPP" << std::endl;
-    headerFile << "#define " << baseName << "_HPP" << std::endl;
+    // Subclasses
+    // E.g. Binary, Grouping, Literal, Unary
+    std::vector<std::string> subclasses;
+    for (const std::string &type : types)
+    {
+        std::string className = type.substr(0, type.find(":") - 1);
+        // Remove spaces after the class name, e.g. "Unary   " -> "Unary"
+        className = className.substr(className.find_first_not_of(" "), className.find_last_not_of(" ") + 1);
+        subclasses.push_back(className);
+    }
 
+    // Include guard
+    headerFile << "#ifndef " << baseName << "_HPP"
+               << "\n";
+    headerFile << "#define " << baseName << "_HPP"
+               << "\n";
     // Include Token.hpp
-    headerFile << "#include \"Token.hpp\"" << std::endl;
+    headerFile << "#include \"Token.hpp\""
+               << "\n";
+    headerFile << "#include <memory>"
+               << "\n";
+
+    // Forward declarations
+    // e.g. class Binary; class Grouping; class Literal; class Unary;
+    for (const std::string &subclassName : subclasses)
+    {
+        headerFile << "class " << subclassName << ";"
+                   << "\n";
+    }
+
+    // Visitor class - public: virtual void visitBinaryExpr(Binary &expr) = 0; ...
+    headerFile << "class Visitor {"
+               << "\n";
+    headerFile << "public:"
+               << "\n";
+    for (const std::string &subclassName : subclasses)
+    {
+        headerFile << "virtual void visit" << subclassName << "Expr(" << subclassName << " &expr) = 0;"
+                   << "\n";
+    }
+    headerFile << " };"
+               << "\n";
 
     // Start of abstract class definition
-    headerFile << "template <typename T>" << std::endl;
-    headerFile << "class " << baseName << "{" << std::endl;
-
+    headerFile << "class " << baseName << "{"
+               << "\n";
     // Define the public section of the class
-    // destructor = default
-    headerFile << "public:" << std::endl;
-    headerFile << "virtual ~" << baseName << "() = default;" << std::endl;
-    headerFile << "virtual T accept(Visitor<T> visitor) = 0;" << std::endl;
-
+    headerFile << "public:"
+               << "\n";
+    headerFile << "virtual ~" << baseName << "() = default;"
+               << "\n";
+    headerFile << "virtual void accept(Visitor &visitor) = 0;"
+               << "\n";
     // End of abstract class definition
-    headerFile << "};" << std::endl;
+    headerFile << "};"
+               << "\n";
 
     // Define the subclasses
     // For each type in the vector
     // Types = subclasses, fields = params of subclasses constructors
     // E.g. Binary : Expr left, Token op, Expr right
-
-    for (const std::string type : types)
+    for (const std::string &type : types)
     {
-
         std::string className = type.substr(0, type.find(":") - 1);
         std::string fields = type.substr(type.find(":") + 1);
-
         defineType(headerFile, baseName, className, fields);
     }
 
     // End of guard (end of file)
-    headerFile << "#endif" << std::endl;
+    headerFile << "#endif"
+               << "\n";
 
     // Close the file
     headerFile.close();
@@ -85,15 +123,26 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
 void defineType(std::ofstream &headerFile, const char *baseName, const std::string &className,
                 const std::string &fieldList)
 {
-    // Write class definition
-    // E.g. Binary : Expr left, Token op, Expr right
-    // -> class Binary : public Expr {
-    //      Expr left;
-    //      Token op;
-    //      Expr right;
-    //
-    //      Binary(Expr &left, Token &op, Expr &right) : left(left), op(op), right(right) {}
-    // }
+    /* Write class definition
+     * class Binary : public Expr
+     * {
+     *
+     *   public:
+     *     Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
+     *         : left(std::move(left)), op(op), right(std::move(right))
+     *     {
+     *     }
+     *
+     *     std::unique_ptr<Expr> left;
+     *     Token op;
+     *     std::unique_ptr<Expr> right;
+     *
+     *     void accept(Visitor &visitor) override
+     *     {
+     *         visitor.visitBinaryExpr(*this);
+     *     }
+     * }
+     */
 
     // Extract the fields
     // Vector of <type, name>, e.g. {Expr, left}, {Token, op}, {Expr, right}
@@ -106,7 +155,6 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
 
         // Remove leading/trailing whitespaces
         field = field.substr(field.find_first_not_of(" "), field.find_last_not_of(" ") + 1);
-
         std::string type = field.substr(0, field.find(" "));
         std::string name = field.substr(field.find(" ") + 1);
         fields.push_back(std::make_pair(type, name));
@@ -116,32 +164,54 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
     std::string initializationParams;
 
     // Start class
-    headerFile << "class " << className << " : public " << baseName << "{" << std::endl;
+    headerFile << "class " << className << " : public " << baseName << " {"
+               << "\n";
+    headerFile << "public:"
+               << "\n";
 
     // Define the fields
     // E.g. Expr left; Token op; Expr right;
     for (const auto &field : fields)
     {
-        headerFile << field.first << " " << field.second << ";" << std::endl;
+        headerFile << field.first << " " << field.second << ";"
+                   << "\n";
+        constructorParams += field.first + " " + field.second;
 
-        constructorParams += field.first + " &" + field.second;          // Expr &left
-        initializationParams += field.second + "(" + field.second + ")"; // left(left)
+        // If type contains "unique_ptr" then use move for initialization, else copy
+        if (field.first.find("unique_ptr") != std::string::npos)
+            initializationParams += field.second + "(std::move(" + field.second + "))";
+        else
+        {
+            // If raw ptr then don't do *ptr( *ptr ), just ptr(ptr)
+            // Example: void *literal; -> literal(literal)
+            if (field.first.find("*") != std::string::npos)
+            {
+                std::string temp = field.second.substr(1);
+                initializationParams += temp + "(" + temp + ")";
+            }
+            else
+                initializationParams += field.second + "(" + field.second + ")";
+        }
+
+        // Add commas if not the last field
         if (field != fields.back())
         {
             constructorParams += ", ";
             initializationParams += ", ";
         }
     }
-    headerFile << std::endl;
+    headerFile << "\n";
 
-    // Constructor (take by reference)
-    // E.g. Binary(Expr &left, Token &op, Expr &right) : left(left), op(op), right(right) {}
+    // E.g. Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right) :
+    // left(std::move(left)), op(op), right(std::move(right)) {}
+    headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {}"
+               << "\n";
 
-    // Binary(Expr &left, Token &op, Expr &right)
-    headerFile << className << "(" << constructorParams;
-    // ) : left(left), op(op), right(right) {}
-    headerFile << ") : " << initializationParams << " {}" << std::endl;
+    // void accept(Visitor &visitor) override { visitor.visit[className]Expr(*this); }
+    headerFile << "void accept(Visitor &visitor) override { visitor.visit" << className << "Expr(*this); }"
+               << "\n";
 
     // End class
-    headerFile << "};" << std::endl;
+    headerFile << "};"
+               << "\n";
 }
