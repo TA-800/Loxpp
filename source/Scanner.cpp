@@ -1,7 +1,6 @@
 #include "headers/Scanner.hpp"
 #include "headers/Loxpp.hpp"
 #include <cctype>
-#include <iostream>
 #include <string>
 
 std::vector<Token> &Scanner::scanTokens()
@@ -98,8 +97,6 @@ void Scanner::scanToken()
         // Multi-line comment
         else if (match('*'))
         {
-            std::cout << "Multi-line comment"
-                      << "\n";
             multiLineComment();
         }
         // Division
