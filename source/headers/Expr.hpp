@@ -24,7 +24,7 @@ class AssignExpr extends Expr {
 
     @Override
     <R> R accept(Visitor<R> visitor) {
-        return visitor.visitAssignExpr(this);
+        return visitor.visitAssignExpr(*this);
     }
 }
 
@@ -41,7 +41,7 @@ class BinaryExpr extends Expr {
 
     @Override
     <R> R accept(Visitor<R> visitor) {
-        return visitor.visitBinaryExpr(this);
+        return visitor.visitBinaryExpr(*this);
     }
 }
 
@@ -94,10 +94,10 @@ class Unary;
 class Visitor
 {
   public:
-    virtual void visitBinaryExpr(const Binary *expr) = 0;
-    virtual void visitGroupingExpr(const Grouping *expr) = 0;
-    virtual void visitLiteralExpr(const Literal *expr) = 0;
-    virtual void visitUnaryExpr(const Unary *expr) = 0;
+    virtual void visitBinaryExpr(const Binary &expr) = 0;
+    virtual void visitGroupingExpr(const Grouping &expr) = 0;
+    virtual void visitLiteralExpr(const Literal &expr) = 0;
+    virtual void visitUnaryExpr(const Unary &expr) = 0;
 };
 
 // Abstract class definition
@@ -124,7 +124,7 @@ class Binary : public Expr
 
     void accept(Visitor &visitor) override
     {
-        visitor.visitBinaryExpr(this); // Pass row pointer
+        visitor.visitBinaryExpr(*this);
     }
 };
 
@@ -141,7 +141,7 @@ class Unary : public Expr
 
     void accept(Visitor &visitor) override
     {
-        visitor.visitUnaryExpr(this);
+        visitor.visitUnaryExpr(*this);
     }
 };
 
@@ -158,7 +158,7 @@ class Literal : public Expr
 
     void accept(Visitor &visitor) override
     {
-        visitor.visitLiteralExpr(this);
+        visitor.visitLiteralExpr(*this);
     }
 };
 
@@ -173,7 +173,7 @@ class Grouping : public Expr
 
     void accept(Visitor &visitor) override
     {
-        visitor.visitGroupingExpr(this);
+        visitor.visitGroupingExpr(*this);
     }
 };
 

@@ -4,6 +4,8 @@
 int main(int argc, char *argv[])
 {
 
+    // TODO: Fix the AST generation script
+
     // Check if we are running a script or an interactive session
     if (argc > 2)
     {

@@ -1,2 +1,4 @@
 build
-generator.exe
+
+# Ignore .exe files
+*.exe
