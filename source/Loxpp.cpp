@@ -47,7 +47,7 @@ void Loxpp::runPrompt()
 
         std::cout << "> ";
         std::getline(std::cin, line);
-        /* line = "3 * 7 + (5 - 4)"; */
+        /* line = "!false"; */
         if (line.empty())
             break;
 
@@ -57,7 +57,7 @@ void Loxpp::runPrompt()
         if (hadError)
             hadError = false;
 
-        /* break; */
+        break;
     }
 }
 
@@ -75,9 +75,6 @@ void Loxpp::run(const std::string &source)
     if (hadError)
         return;
 
-    // NOTE: Any other AST visitor can be used here. Make sure to free memory if visitor uses it, example
-    // AstInterpreter.cleanUp()
-
     // Use AST Interpreter to interpret the tokens
     interpreter.evaluate(expression);
 
@@ -88,7 +85,7 @@ void Loxpp::run(const std::string &source)
 // Error handling
 void Loxpp::runtimeError(const RuntimeError &error)
 {
-    std::cerr << error.what() << "\n[line " << error.token.getLine() << "]\n";
+    std::cerr << "[line " << error.token.getLine() << "] " << error.token.getLexeme() << " : " << error.what() << "\n";
     hadRuntimeError = true;
 }
 void Loxpp::error(const Token &token, const std::string &message)

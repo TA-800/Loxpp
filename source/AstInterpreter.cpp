@@ -245,11 +245,13 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
             result = new std::string(*static_cast<std::string *>(left) + *static_cast<std::string *>(right));
             type = TokenInfo::Type::STRING;
         }
+        else
+        {
+            // If none of the above conditions are met, we are attempting to add two heterogeneous types. Throw error.
+            throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
+        }
         break;
     }
-
-        // If none of the above conditions are met, we are attempting to add two heterogeneous types. Throw error.
-        throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
 
     case TokenInfo::Type::SLASH: {
         checkNumberOperands(expr.op, leftType, rightType);
