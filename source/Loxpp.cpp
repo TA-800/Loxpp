@@ -47,6 +47,7 @@ void Loxpp::runPrompt()
 
         std::cout << "> ";
         std::getline(std::cin, line);
+        /* line = "3 * 7 + (5 - 4)"; */
         if (line.empty())
             break;
 
@@ -55,6 +56,8 @@ void Loxpp::runPrompt()
         // Don't kill user session if error, just reset the flag
         if (hadError)
             hadError = false;
+
+        /* break; */
     }
 }
 

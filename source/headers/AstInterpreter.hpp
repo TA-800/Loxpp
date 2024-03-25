@@ -9,6 +9,7 @@ class AstInterpreter : public Visitor
 
     void *result = nullptr; // Value ("Hello", 2, etc.)
     TokenInfo::Type type;   // Type of the literal (string, number, etc.)
+
     bool isTruthy(void *value);
     bool isEqual(void *left, void *right, TokenInfo::Type leftType, TokenInfo::Type rightType);
 
@@ -29,9 +30,11 @@ class AstInterpreter : public Visitor
     void *getResult();
     TokenInfo::Type getResultType();
 
-    /* Completely free up the memory taken up by the result variable. Set result = nullptr and type to NIL before
-     * reassigning it again to hold something */
-    void cleanUp();
+    /*
+     * Clean up pointers when they are no longer needed. For example, left and right void * in visitBinaryExpr
+     * for temporary values.
+     */
+    void cleanUp(void *pointerToFree);
 
     // Calls setInterpretResult() (and getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);

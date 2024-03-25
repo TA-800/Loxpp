@@ -34,24 +34,21 @@ void AstInterpreter::checkNumberOperands(const Token &op, TokenInfo::Type leftTy
     throw RuntimeError(op, "Operands must be numbers.");
 }
 
-void AstInterpreter::cleanUp()
+void AstInterpreter::cleanUp(void *pointerToFree)
 {
     // void ptrs cannot be deleted. Cast to the correct type before deleting.
 
-    if (result != nullptr)
+    if (pointerToFree != nullptr)
     {
         if (type == TokenInfo::Type::STRING)
         {
-            delete static_cast<std::string *>(result);
+            delete static_cast<std::string *>(pointerToFree);
         }
         else if (type == TokenInfo::Type::NUMBER)
         {
-            delete static_cast<double *>(result);
+            delete static_cast<double *>(pointerToFree);
         }
     }
-
-    result = nullptr;
-    type = TokenInfo::Type::NIL;
 }
 
 void AstInterpreter::setInterpretResult(const std::unique_ptr<Expr> &expr)
@@ -133,8 +130,6 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
     TokenInfo::Type rightType = getResultType();
     void *right = getResult();
 
-    cleanUp();
-
     switch (expr.op.getType())
     {
 
@@ -155,6 +150,9 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
     }
     }
 
+    cleanUp(right);
+    right = nullptr;
+
     return;
 }
 
@@ -171,8 +169,6 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     TokenInfo::Type rightType = getResultType();
     void *right = getResult();
 
-    cleanUp();
-
     // Switch operator
     switch (expr.op.getType())
     {
@@ -180,38 +176,57 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     // Comparison operators
     case TokenInfo::Type::GREATER: {
         checkNumberOperands(expr.op, leftType, rightType);
-        result = new bool(*static_cast<double *>(left) > *static_cast<double *>(right));
+        bool newVal = *static_cast<double *>(left) > *static_cast<double *>(right);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
     case TokenInfo::Type::GREATER_EQUAL: {
 
         checkNumberOperands(expr.op, leftType, rightType);
-        result = new bool(*static_cast<double *>(left) >= *static_cast<double *>(right));
+        bool newVal = *static_cast<double *>(left) >= *static_cast<double *>(right);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
     case TokenInfo::Type::LESS: {
         checkNumberOperands(expr.op, leftType, rightType);
-        result = new bool(*static_cast<double *>(left) < *static_cast<double *>(right));
+        bool newVal = *static_cast<double *>(left) < *static_cast<double *>(right);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
     case TokenInfo::Type::LESS_EQUAL: {
         checkNumberOperands(expr.op, leftType, rightType);
-        result = new bool(*static_cast<double *>(left) <= *static_cast<double *>(right));
+        bool newVal = *static_cast<double *>(left) <= *static_cast<double *>(right);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
 
     case TokenInfo::Type::BANG_EQUAL: {
         bool newVal = !isEqual(left, right, leftType, rightType);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
     case TokenInfo::Type::EQUAL_EQUAL: {
         bool newVal = isEqual(left, right, leftType, rightType);
+        result = new bool(newVal);
+        result = (void *)result;
+        type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
         break;
     }
 
     case TokenInfo::Type::MINUS: {
         checkNumberOperands(expr.op, leftType, rightType);
         result = new double(*static_cast<double *>(left) - *static_cast<double *>(right));
+        type = TokenInfo::Type::NUMBER;
         break;
     }
 
@@ -219,11 +234,17 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     case TokenInfo::Type::PLUS: {
         // If both are numbers, add them
         if (leftType == TokenInfo::Type::NUMBER && rightType == TokenInfo::Type::NUMBER)
+        {
             result = new double(*static_cast<double *>(left) + *static_cast<double *>(right));
+            type = TokenInfo::Type::NUMBER;
+        }
 
         // Concatenate strings
         else if (leftType == TokenInfo::Type::STRING && rightType == TokenInfo::Type::STRING)
+        {
             result = new std::string(*static_cast<std::string *>(left) + *static_cast<std::string *>(right));
+            type = TokenInfo::Type::STRING;
+        }
         break;
     }
 
@@ -233,15 +254,23 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     case TokenInfo::Type::SLASH: {
         checkNumberOperands(expr.op, leftType, rightType);
         result = new double(*static_cast<double *>(left) / *static_cast<double *>(right));
+        type = TokenInfo::Type::NUMBER;
         break;
     }
 
     case TokenInfo::Type::STAR: {
         checkNumberOperands(expr.op, leftType, rightType);
         result = new double(*static_cast<double *>(left) * *static_cast<double *>(right));
+        type = TokenInfo::Type::NUMBER;
         break;
     }
     }
+
+    cleanUp(left);
+    cleanUp(right);
+    left = nullptr;
+    right = nullptr;
+
     return;
 }
 
@@ -253,6 +282,8 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
         void *result = getResult();
         TokenInfo::Type type = getResultType();
         std::cout << stringify(result, type) << "\n";
+        cleanUp(result);
+        result = nullptr;
     }
     catch (RuntimeError &error)
     {
