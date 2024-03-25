@@ -1,5 +1,4 @@
 #include "headers/Loxpp.hpp"
-#include "headers/AstPrinter.hpp"
 #include "headers/Parser.hpp"
 #include "headers/Scanner.hpp"
 #include "headers/Token.hpp"
@@ -9,6 +8,8 @@
 
 // Everything is static in this class
 bool Loxpp::hadError = false;
+bool Loxpp::hadRuntimeError = false;
+AstInterpreter Loxpp::interpreter;
 
 int Loxpp::runFile(const std::string &path)
 {
@@ -28,10 +29,9 @@ int Loxpp::runFile(const std::string &path)
 
     // If error (can be set by run() if error occurs)
     if (hadError)
-    {
-        // 65 -> indicates error
         return 65;
-    }
+    if (hadRuntimeError)
+        return 70;
 
     // 0 -> indicates success
     return 0;
@@ -72,16 +72,22 @@ void Loxpp::run(const std::string &source)
     if (hadError)
         return;
 
-    // Use AST Printer to print the tokens
-    AstPrinter printer;
-    printer.setPrintResult(expression);
-    std::cout << printer.get() << std::endl;
+    // NOTE: Any other AST visitor can be used here. Make sure to free memory if visitor uses it, example
+    // AstInterpreter.cleanUp()
+
+    // Use AST Interpreter to interpret the tokens
+    interpreter.evaluate(expression);
 
     // Free memory (to avoid memory leaks because we are using new with void *)
     scanner.freeTokens();
 }
 
 // Error handling
+void Loxpp::runtimeError(const RuntimeError &error)
+{
+    std::cerr << error.what() << "\n[line " << error.token.getLine() << "]\n";
+    hadRuntimeError = true;
+}
 void Loxpp::error(const Token &token, const std::string &message)
 {
     if (token.getType() == TokenInfo::Type::END_OF_FILE)

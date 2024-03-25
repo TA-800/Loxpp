@@ -81,6 +81,7 @@ public class Main {
 #include <memory>
 
 // Forward declaration
+// TODO: Ternary
 class Binary;
 class Grouping;
 class Literal;

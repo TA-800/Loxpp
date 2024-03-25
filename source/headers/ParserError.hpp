@@ -10,7 +10,6 @@ class ParserError : public std::runtime_error
     {
         Loxpp::error(token, message);
 
-        // And from here an error would be thrown that terminates the program unless
-        // caught with a try-catch block
+        // And from here an error would be thrown that terminates the program unless caught with a try-catch block
     }
 };

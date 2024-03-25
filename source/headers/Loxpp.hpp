@@ -1,13 +1,18 @@
 #ifndef LOXPP_HPP
 #define LOXPP_HPP
 
+#include "AstInterpreter.hpp"
+#include "RuntimeError.hpp"
 #include "Token.hpp"
 #include <string>
 
 class Loxpp
 {
+    // Interpreter for the AST
+    static AstInterpreter interpreter;
     // Keep track of errors
     static bool hadError;
+    static bool hadRuntimeError;
 
   public:
     /* Run the source code
@@ -21,6 +26,7 @@ class Loxpp
      * Main will exit with this error code */
     static int runFile(const std::string &path);
 
+    static void runtimeError(const RuntimeError &error);
     static void error(const Token &token, const std::string &message);
     static void error(int line, const std::string &message);
     static void report(int line, const std::string &where, const std::string &message);

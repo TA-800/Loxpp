@@ -68,36 +68,3 @@ const std::string &AstPrinter::get() const
 {
     return result;
 };
-
-// test here
-/* int main(int argc, char *argv[]) */
-/* { */
-/*     // Create AstPrinter */
-/*     AstPrinter printer; */
-
-/*     // Create Expr = -123 * ( 45.67 ) -> Binary ( Unary (-, 123), *, Grouping ( 45.67 ) ) */
-/*     // -> ( * ( - 123 ) ( group 45.67 ) ) */
-/*     std::unique_ptr<Expr> binary = std::make_unique<Binary>( */
-/*         std::make_unique<Unary>(Token(TokenInfo::MINUS, "-", nullptr, 1), */
-/*                                 std::make_unique<Literal>((void *)new double(123), TokenInfo::Type::NUMBER)), */
-/*         Token(TokenInfo::STAR, "*", nullptr, 1), */
-/*         std::make_unique<Grouping>(std::make_unique<Literal>((void *)new double(45.67), TokenInfo::Type::NUMBER)));
- */
-
-/*     // Very simple expression: 2 + 3 -> Binary ( +, 2, 3) */
-/*     // -> ( + 2 3 ) */
-/*     /1* std::unique_ptr<Expr> binary = *1/ */
-/*     /1*     std::make_unique<Binary>(std::make_unique<Literal>((void *)new double(2), TokenInfo::Type::NUMBER), *1/
- */
-/*     /1*                              Token(TokenInfo::PLUS, "+", nullptr, 1), *1/ */
-/*     /1*                              std::make_unique<Literal>((void *)new double(3), TokenInfo::Type::NUMBER)); *1/
- */
-
-/*     // In the Printer class, set the print result to the binary expression */
-/*     printer.setPrintResult(binary); */
-
-/*     // Get that result from the Printer class and print it */
-/*     std::cout << printer.get() << std::endl; */
-
-/*     return 0; */
-/* } */

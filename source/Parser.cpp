@@ -53,6 +53,7 @@ bool Parser::match(const std::vector<TokenInfo::Type> &types)
 }
 
 // Run tokens with grammar rules to form expressions
+// TODO: Ternary grammar rule
 
 std::unique_ptr<Expr> Parser::expression()
 {
