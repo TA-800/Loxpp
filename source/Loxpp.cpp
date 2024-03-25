@@ -1,4 +1,6 @@
 #include "headers/Loxpp.hpp"
+#include "headers/AstPrinter.hpp"
+#include "headers/Parser.hpp"
 #include "headers/Scanner.hpp"
 #include "headers/Token.hpp"
 #include <fstream>
@@ -62,11 +64,18 @@ void Loxpp::run(const std::string &source)
     Scanner scanner(source);
     std::vector<Token> tokens = scanner.scanTokens();
 
-    // Just print for now
-    for (const Token &token : tokens)
-    {
-        std::cout << token.toString() << "\n";
-    }
+    // Parse tokens into expressions
+    Parser parser(tokens);
+    std::unique_ptr<Expr> expression = parser.parse();
+
+    // If there was an error, don't run the interpreter
+    if (hadError)
+        return;
+
+    // Use AST Printer to print the tokens
+    AstPrinter printer;
+    printer.setPrintResult(expression);
+    std::cout << printer.get() << std::endl;
 
     // Free memory (to avoid memory leaks because we are using new with void *)
     scanner.freeTokens();

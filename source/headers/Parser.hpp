@@ -39,6 +39,10 @@ class Parser
     /* Returns the previous token (current - 1) */
     Token previous() const;
 
+    Token consume(TokenInfo::Type type, const std::string &message);
+
+    // Parse tokens into expressions
+
     std::unique_ptr<Expr> expression();
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> comparison();
@@ -47,13 +51,19 @@ class Parser
     std::unique_ptr<Expr> unary();
     std::unique_ptr<Expr> primary();
 
-    Token consume(TokenInfo::Type type, const std::string &message);
-    void error(const Token &token, const std::string &message);
+    // Syncronize the parser after an error
+
+    void synchronize();
 
   public:
     Parser(const std::vector<Token> &tokens) : tokens(tokens)
     {
     }
+
+    /*
+     * Parse scanned tokens into expressions to form an abstract syntax tree (AST)
+     */
+    std::unique_ptr<Expr> parse();
 };
 
 #endif

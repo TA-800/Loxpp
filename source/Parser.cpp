@@ -52,6 +52,8 @@ bool Parser::match(const std::vector<TokenInfo::Type> &types)
     return false;
 }
 
+// Run tokens with grammar rules to form expressions
+
 std::unique_ptr<Expr> Parser::expression()
 {
     return equality();
@@ -162,7 +164,7 @@ std::unique_ptr<Expr> Parser::primary()
     }
 
     // If we've reached here, then throw an error because we couldn't find a valid expression to put into AST
-    throw ParserError(peek(), "Could not find valid expression.");
+    throw ParserError(peek(), "Expect expression.");
 }
 
 Token Parser::consume(TokenInfo::Type type, const std::string &message)
@@ -174,4 +176,52 @@ Token Parser::consume(TokenInfo::Type type, const std::string &message)
 
     /* error(peek(), message); */
     throw ParserError(peek(), message);
+}
+
+// void Parser::error( )
+
+void Parser::synchronize()
+{
+    advance();
+
+    // Keep consuming tokens until we find a statement boundary
+    while (!isAtEnd())
+    {
+        if (previous().getType() == TokenInfo::Type::SEMICOLON)
+            return;
+
+        switch (peek().getType())
+        {
+        case TokenInfo::Type::CLASS:
+        case TokenInfo::Type::FUN:
+        case TokenInfo::Type::VAR:
+        case TokenInfo::Type::FOR:
+        case TokenInfo::Type::IF:
+        case TokenInfo::Type::WHILE:
+        case TokenInfo::Type::PRINT:
+        case TokenInfo::Type::RETURN:
+            return;
+        default:
+            break;
+        }
+
+        advance();
+    }
+}
+
+// Parse
+
+std::unique_ptr<Expr> Parser::parse()
+{
+    // If we are able to parse the expression, return it
+    try
+    {
+        return expression();
+    }
+
+    // If we can't parse the expression, return null
+    catch (const ParserError &error)
+    {
+        return nullptr;
+    }
 }
