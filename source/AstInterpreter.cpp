@@ -34,7 +34,8 @@ void AstInterpreter::checkNumberOperands(const Token &op, TokenInfo::Type leftTy
     throw RuntimeError(op, "Operands must be numbers.");
 }
 
-void AstInterpreter::cleanUp(void *pointerToFree)
+// Pass pointer by reference to free it after use
+void AstInterpreter::cleanUp(void *&pointerToFree)
 {
     // void ptrs cannot be deleted. Cast to the correct type before deleting.
 
@@ -48,6 +49,8 @@ void AstInterpreter::cleanUp(void *pointerToFree)
         {
             delete static_cast<double *>(pointerToFree);
         }
+
+        pointerToFree = nullptr;
     }
 }
 
@@ -68,6 +71,8 @@ TokenInfo::Type AstInterpreter::getResultType()
 
 // Simplest interpretable expression
 // For a literal expression, the value is the literal itself
+// Be careful, freeing everything like left and right ptrs that get their result in the end from a literal value will
+// also free the literal value itself held by Tokens array.
 void AstInterpreter::visitLiteralExpr(const Literal &expr)
 {
     result = expr.value;
@@ -149,9 +154,6 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
         break;
     }
     }
-
-    cleanUp(right);
-    right = nullptr;
 
     return;
 }
@@ -268,11 +270,6 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     }
     }
 
-    cleanUp(left);
-    cleanUp(right);
-    left = nullptr;
-    right = nullptr;
-
     return;
 }
 
@@ -281,11 +278,8 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     try
     {
         setInterpretResult(expr);
-        void *result = getResult();
-        TokenInfo::Type type = getResultType();
         std::cout << stringify(result, type) << "\n";
-        cleanUp(result);
-        result = nullptr;
+        /* cleanUp(result); */
     }
     catch (RuntimeError &error)
     {

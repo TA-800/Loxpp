@@ -1,4 +1,5 @@
 #include "headers/Token.hpp"
+#include <iostream>
 
 std::string Token::toString() const
 {
@@ -31,15 +32,20 @@ std::string Token::toString() const
 
 void Token::freeLiteral()
 {
+
     if (literal != nullptr)
     {
         if (type == TokenInfo::Type::STRING)
         {
             delete static_cast<std::string *>(literal);
+            std::cout << "Deleted memory for string"
+                      << "\n";
         }
         else if (type == TokenInfo::Type::NUMBER)
         {
             delete static_cast<double *>(literal);
+            std::cout << "Deleted memory for number"
+                      << "\n";
         }
     }
 }
