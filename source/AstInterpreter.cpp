@@ -18,6 +18,35 @@
      * then evalutate left and right based on the operator and set that to result (and type)
  */
 
+void AstInterpreter::toCleanUp(void *&pointerToFree, TokenInfo::Type type)
+{
+    tempValues.push_back(std::make_pair(pointerToFree, type));
+}
+
+void AstInterpreter::cleanUp()
+{
+    for (auto &pair : tempValues)
+    {
+        if (pair.first == nullptr)
+            continue;
+
+        if (pair.second == TokenInfo::Type::STRING)
+        {
+            delete static_cast<std::string *>(pair.first);
+        }
+        else if (pair.second == TokenInfo::Type::NUMBER)
+        {
+            delete static_cast<double *>(pair.first);
+        }
+        else if (pair.second == TokenInfo::Type::TRUE || pair.second == TokenInfo::Type::FALSE)
+        {
+            delete static_cast<bool *>(pair.first);
+        }
+
+        pair.first = nullptr;
+    }
+}
+
 void AstInterpreter::checkNumberOperand(const Token &op, TokenInfo::Type rightType)
 {
     if (rightType == TokenInfo::Type::NUMBER)
@@ -32,26 +61,6 @@ void AstInterpreter::checkNumberOperands(const Token &op, TokenInfo::Type leftTy
         return;
 
     throw RuntimeError(op, "Operands must be numbers.");
-}
-
-// Pass pointer by reference to free it after use
-void AstInterpreter::cleanUp(void *&pointerToFree)
-{
-    // void ptrs cannot be deleted. Cast to the correct type before deleting.
-
-    if (pointerToFree != nullptr)
-    {
-        if (type == TokenInfo::Type::STRING)
-        {
-            delete static_cast<std::string *>(pointerToFree);
-        }
-        else if (type == TokenInfo::Type::NUMBER)
-        {
-            delete static_cast<double *>(pointerToFree);
-        }
-
-        pointerToFree = nullptr;
-    }
 }
 
 void AstInterpreter::setInterpretResult(const std::unique_ptr<Expr> &expr)
@@ -154,6 +163,9 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
         break;
     }
     }
+
+    // Every new value that was evaluated and stored somewhere in memory should be freed
+    toCleanUp(result, type);
 
     return;
 }
@@ -270,6 +282,9 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     }
     }
 
+    // Every new value that was evaluated and stored somewhere in memory should be freed
+    toCleanUp(result, type);
+
     return;
 }
 
@@ -279,7 +294,6 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     {
         setInterpretResult(expr);
         std::cout << stringify(result, type) << "\n";
-        /* cleanUp(result); */
     }
     catch (RuntimeError &error)
     {

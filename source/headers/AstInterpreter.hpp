@@ -2,16 +2,15 @@
 #define ASTINTERPRETER_HPP
 
 #include "Expr.hpp"
+#include <utility>
 
 class AstInterpreter : public Visitor
 {
     // Can return any type of value
 
-    void *result = nullptr; // Value ("Hello", 2, etc.)
-    TokenInfo::Type type;   // Type of the literal (string, number, etc.)
-    // TODO: Create locations in memory for temporary values, to be freed after use
-    /* void *left = nullptr; */
-    /* void *right = nullptr; */
+    void *result = nullptr;                                     // Value ("Hello", 2, etc.)
+    TokenInfo::Type type;                                       // Type of the literal (string, number, etc.)
+    std::vector<std::pair<void *, TokenInfo::Type>> tempValues; // Temporary values to free after use
 
     bool isTruthy(void *value);
     bool isEqual(void *left, void *right, TokenInfo::Type leftType, TokenInfo::Type rightType);
@@ -34,10 +33,15 @@ class AstInterpreter : public Visitor
     TokenInfo::Type getResultType();
 
     /*
-     * Clean up pointers when they are no longer needed. For example, left and right void * in visitBinaryExpr
-     * for temporary values.
+     * Add a value to the temporary values vector to free after use
      */
-    void cleanUp(void *&pointerToFree);
+    void toCleanUp(void *&pointerToFree, TokenInfo::Type type);
+
+    /*
+     * Free all temporary values created by the interpreter to evaluate a result.
+     * Use only after tokens are not needed anymore because interpreter holds references & pointers to them.
+     */
+    void cleanUp();
 
     // Calls setInterpretResult() (and getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);

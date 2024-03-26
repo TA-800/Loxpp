@@ -84,6 +84,9 @@ void Loxpp::run(const std::string &source)
 
     // Free memory (to avoid memory leaks because we are using new with void *)
     scanner.freeTokens();
+
+    // Interpreter has temporary values that need to be freed. Since tokens are not needed anymore, we can free.
+    interpreter.cleanUp();
 }
 
 // Error handling
