@@ -1,5 +1,5 @@
 #include "headers/Loxpp.hpp"
-#include "headers/AstPrinter.hpp"
+/* #include "headers/AstPrinter.hpp" */
 #include "headers/Parser.hpp"
 #include "headers/Scanner.hpp"
 #include "headers/Token.hpp"
@@ -42,13 +42,15 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
+    std::vector<std::string> lines{"!(false)", "\"ab\" + \"bc\"", "1 + 2 * 3"};
 
     int counter = 0;
     while (true)
     {
 
         std::cout << "> ";
-        std::getline(std::cin, line);
+        /* std::getline(std::cin, line); */
+        line = lines[counter]; // Debugging purposes
         if (line.empty())
             break;
 
@@ -58,7 +60,9 @@ void Loxpp::runPrompt()
         if (hadError)
             hadError = false;
 
-        /* break; */
+        counter++;
+        if (counter == 3) // Debugging purposes
+            break;
     }
 }
 
@@ -78,9 +82,6 @@ void Loxpp::run(const std::string &source)
 
     // Use AST Interpreter to interpret the tokens
     interpreter.evaluate(expression);
-    /* AstPrinter printer; */
-    /* printer.setPrintResult(expression); */
-    /* std::cout << printer.get() << "\n"; */
 
     // Free memory (to avoid memory leaks because we are using new with void *)
     scanner.freeTokens();

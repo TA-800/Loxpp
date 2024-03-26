@@ -7,14 +7,14 @@ class AstInterpreter : public Visitor
 {
     // Can return any type of value
 
-    void *result = nullptr; // Value ("Hello", 2, etc.)
-    TokenInfo::Type type;   // Type of the literal (string, number, etc.)
-    // TODO: Create locations in memory for temporary values, to be freed after use
-    /* void *left = nullptr; */
-    /* void *right = nullptr; */
+    TokenInfo::Type type;         // Type of the literal (string, number, etc.)
+    std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
+    std::shared_ptr<void> left;
+    std::shared_ptr<void> right;
 
-    bool isTruthy(void *value);
-    bool isEqual(void *left, void *right, TokenInfo::Type leftType, TokenInfo::Type rightType);
+    bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
+    bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
+                 TokenInfo::Type rightType);
 
     // Runtime error checkers for binary and unary operations
     void checkNumberOperand(const Token &op, TokenInfo::Type rightType);
@@ -30,18 +30,19 @@ class AstInterpreter : public Visitor
     void visitGroupingExpr(const Grouping &expr) override;
 
     // Get the result of the interpretation
-    void *getResult();
+    std::shared_ptr<void> &getResult();
     TokenInfo::Type getResultType();
 
-    /*
-     * Clean up pointers when they are no longer needed. For example, left and right void * in visitBinaryExpr
-     * for temporary values.
-     */
-    void cleanUp(void *&pointerToFree);
+    // Get value from void pointer and set it to shared_ptr
+    void setResult(std::shared_ptr<void> &value, void *ptr, TokenInfo::Type type);
+    void setResult(std::shared_ptr<void> &value, std::shared_ptr<void> &ptr, TokenInfo::Type type);
+
+    // Free pointers
+    /* void freePointer(void *&ptr); */
 
     // Calls setInterpretResult() (and getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);
-    std::string stringify(void *result, TokenInfo::Type type);
+    std::string stringify(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };
 
 #endif // !ASTINTERPRETER_HPP
