@@ -3,21 +3,6 @@
 #include "headers/RuntimeError.hpp"
 #include <iostream>
 
-/*
- *
- * Use visitor methods to set the result of the interpretation.
- * Then use getResult() to get the result.
- * Works recursively.
- *
- * E.g. Expr = (2 + 3) + 4
- * visitBinaryExpr(Expr.left) (2 + 3)
-     * left = getResult() and getType()
-     * visitBinaryExpr(Expr.right) 4
-     * right = getResult() and getType()
-
-     * then evalutate left and right based on the operator and set that to result (and type)
- */
-
 void AstInterpreter::checkNumberOperand(const Token &op, TokenInfo::Type rightType)
 {
     if (rightType == TokenInfo::Type::NUMBER)
@@ -37,6 +22,27 @@ void AstInterpreter::checkNumberOperands(const Token &op, TokenInfo::Type leftTy
 void AstInterpreter::setInterpretResult(const std::unique_ptr<Expr> &expr)
 {
     expr->accept(*this);
+}
+
+void AstInterpreter::setInterpretResult(const std::vector<std::unique_ptr<Stmt>> &statements)
+{
+    try
+    {
+        for (auto &stmt : statements)
+        {
+            /* stmt->accept(*this); */
+            execute(stmt);
+        }
+    }
+    catch (RuntimeError &error)
+    {
+        Loxpp::runtimeError(error);
+    }
+}
+
+void AstInterpreter::execute(const std::unique_ptr<Stmt> &stmt)
+{
+    stmt->accept(*this);
 }
 
 std::shared_ptr<void> &AstInterpreter::getResult()
@@ -338,7 +344,7 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     try
     {
         setInterpretResult(expr);
-        std::cout << stringifyAndPrint(result, type) << "\n";
+        /* std::cout << stringify(result, type) << "\n"; */
     }
     catch (RuntimeError &error)
     {
@@ -346,7 +352,18 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     }
 }
 
-std::string AstInterpreter::stringifyAndPrint(const std::shared_ptr<void> &result, TokenInfo::Type type)
+void AstInterpreter::visitExpressionStmt(const Expression &stmt)
+{
+    evaluate(stmt.expression);
+};
+
+void AstInterpreter::visitPrintStmt(const Print &stmt)
+{
+    evaluate(stmt.expression);
+    std::cout << stringify(result, type) << "\n";
+};
+
+std::string AstInterpreter::stringify(const std::shared_ptr<void> &result, TokenInfo::Type type)
 {
     if (result == nullptr)
         return "nil";

@@ -60,6 +60,40 @@ std::unique_ptr<Expr> Parser::expression()
     return equality();
 }
 
+std::unique_ptr<Stmt> Parser::statement()
+{
+    // Check if the current token is a print statement
+    if (match({TokenInfo::Type::PRINT}))
+        return printStatement();
+
+    // Otherwise, it is an expression statement
+    return expressionStatement();
+}
+
+std::unique_ptr<Stmt> Parser::printStatement()
+{
+    // Some expression whose value has been computed (interpreted)
+    std::unique_ptr<Expr> value = expression();
+
+    // After a statement, there should be a semicolon
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after value.");
+
+    // Return a valid statement
+    return std::make_unique<Print>(std::move(value));
+}
+
+std::unique_ptr<Stmt> Parser::expressionStatement()
+{
+    // Some expression whose value has been computed (interpreted)
+    std::unique_ptr<Expr> value = expression();
+
+    // After a statement, there should be a semicolon
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after expression.");
+
+    // Return a valid statement
+    return std::make_unique<Expression>(std::move(value));
+}
+
 // equality → comparison ( ( "!=" | "==" ) comparison )* ;
 std::unique_ptr<Expr> Parser::equality()
 {
@@ -212,17 +246,21 @@ void Parser::synchronize()
 
 // Parse
 
-std::unique_ptr<Expr> Parser::parse()
+std::vector<std::unique_ptr<Stmt>> Parser::parse()
 {
-    // If we are able to parse the expression, return it
     try
     {
-        return expression();
-    }
+        std::vector<std::unique_ptr<Stmt>> statements;
+        while (!isAtEnd())
+        {
+            statements.push_back(statement());
+        }
 
-    // If we can't parse the expression, return null
+        return statements;
+    }
     catch (const ParserError &error)
     {
-        return nullptr;
+        /* synchronize(); */
+        return {};
     }
 }

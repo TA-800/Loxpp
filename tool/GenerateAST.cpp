@@ -23,11 +23,14 @@ int main(int argc, char *argv[])
     /* const char *outputDir = argv[1]; */
     /* std::string outputDir = argv[1]; */
     std::string outputDir = "source/headers";
-    const char *baseName = "Expr";
-    const std::vector<std::string> types = {
-        "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
-        "Grouping : std::unique_ptr<Expr> expression", "Literal  : void *value",
-        "Unary    : Token op, std::unique_ptr<Expr> right"};
+    /* const char *baseName = "Expr"; */
+    /* const std::vector<std::string> types = { */
+    /*     "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
+    /*     "Grouping : std::unique_ptr<Expr> expression", "Literal  : void *value", */
+    /*     "Unary    : Token op, std::unique_ptr<Expr> right"}; */
+    const char *baseName = "Stmt";
+    const std::vector<std::string> types = {"Expression : std::unique_ptr<Expr> expression",
+                                            "Print      : std::unique_ptr<Expr> expression"};
     defineAst(outputDir, baseName, types);
 };
 
@@ -75,7 +78,7 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
     }
 
     // Visitor class - public: virtual void visitBinaryExpr(Binary &expr) = 0; ...
-    headerFile << "class Visitor {"
+    headerFile << "class " << baseName << "Visitor{"
                << "\n";
     headerFile << "public:"
                << "\n";
@@ -95,7 +98,7 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
                << "\n";
     headerFile << "virtual ~" << baseName << "() = default;"
                << "\n";
-    headerFile << "virtual void accept(Visitor &visitor) = 0;"
+    headerFile << "virtual void accept(" << baseName << "Visitor &visitor) = 0;"
                << "\n";
     // End of abstract class definition
     headerFile << "};"
@@ -208,7 +211,8 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
                << "\n";
 
     // void accept(Visitor &visitor) override { visitor.visit[className]Expr(*this); }
-    headerFile << "void accept(Visitor &visitor) override { visitor.visit" << className << "Expr(*this); }"
+    headerFile << "void accept( " << baseName << "Visitor &visitor) override { visitor.visit" << className
+               << "Expr(*this); }"
                << "\n";
 
     // End class

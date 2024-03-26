@@ -92,7 +92,7 @@ class Unary;
 // Visitor will have a visit method for each supported subclass of Expr.
 // Example: visitBinaryExpr, visitGroupingExpr, visitLiteralExpr, visitUnaryExpr
 
-class Visitor
+class ExprVisitor
 {
   public:
     virtual void visitBinaryExpr(const Binary &expr) = 0;
@@ -106,7 +106,7 @@ class Expr
 {
   public:
     virtual ~Expr() = default;
-    virtual void accept(Visitor &visitor) = 0;
+    virtual void accept(ExprVisitor &visitor) = 0;
 };
 
 // Concrete class definitions
@@ -123,7 +123,7 @@ class Binary : public Expr
     Token op;
     std::unique_ptr<Expr> right;
 
-    void accept(Visitor &visitor) override
+    void accept(ExprVisitor &visitor) override
     {
         visitor.visitBinaryExpr(*this);
     }
@@ -140,7 +140,7 @@ class Unary : public Expr
     Token op;
     std::unique_ptr<Expr> right;
 
-    void accept(Visitor &visitor) override
+    void accept(ExprVisitor &visitor) override
     {
         visitor.visitUnaryExpr(*this);
     }
@@ -157,7 +157,7 @@ class Literal : public Expr
     TokenInfo::Type type; // (so visitors can know what type of literal it is, e.g. PrintVisitor can safely cast to int
                           // or string before printing)
 
-    void accept(Visitor &visitor) override
+    void accept(ExprVisitor &visitor) override
     {
         visitor.visitLiteralExpr(*this);
     }
@@ -172,7 +172,7 @@ class Grouping : public Expr
 
     std::unique_ptr<Expr> expression;
 
-    void accept(Visitor &visitor) override
+    void accept(ExprVisitor &visitor) override
     {
         visitor.visitGroupingExpr(*this);
     }

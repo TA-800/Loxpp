@@ -3,7 +3,7 @@
 
 #include "Expr.hpp"
 
-class AstPrinter : public Visitor
+class AstPrinter : public ExprVisitor
 {
 
     std::string result = "";

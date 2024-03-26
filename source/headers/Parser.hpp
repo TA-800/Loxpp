@@ -2,6 +2,7 @@
 #define PARSER_HPP
 
 #include "Expr.hpp"
+#include "Stmt.hpp"
 #include "Token.hpp"
 
 /* Grammar:
@@ -52,8 +53,12 @@ class Parser
     std::unique_ptr<Expr> primary();
 
     // Syncronize the parser after an error
-
     void synchronize();
+
+    // Parse statements
+    std::unique_ptr<Stmt> statement();
+    std::unique_ptr<Stmt> printStatement();
+    std::unique_ptr<Stmt> expressionStatement();
 
   public:
     Parser(const std::vector<Token> &tokens) : tokens(tokens)
@@ -63,7 +68,7 @@ class Parser
     /*
      * Parse scanned tokens into expressions to form an abstract syntax tree (AST)
      */
-    std::unique_ptr<Expr> parse();
+    std::vector<std::unique_ptr<Stmt>> parse();
 };
 
 #endif

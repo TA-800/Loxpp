@@ -2,8 +2,9 @@
 #define ASTINTERPRETER_HPP
 
 #include "Expr.hpp"
+#include "Stmt.hpp"
 
-class AstInterpreter : public Visitor
+class AstInterpreter : public ExprVisitor, StmtVisitor
 {
     // Can return any type of value
 
@@ -19,8 +20,13 @@ class AstInterpreter : public Visitor
     void checkNumberOperands(const Token &op, TokenInfo::Type leftType, TokenInfo::Type rightType);
 
   public:
-    // Start interpreting the expression
-    void setInterpretResult(const std::unique_ptr<Expr> &expr);
+    /*
+     * Interpreter will go through the AST of statements and expressions and set the result var equal to a computed
+     * value from the statements or expressions. Use getResult() to get the result of the interpretation.
+     */
+    void setInterpretResult(const std::unique_ptr<Expr> &expr);                    // For expressions
+    void setInterpretResult(const std::vector<std::unique_ptr<Stmt>> &statements); // For statements
+    void execute(const std::unique_ptr<Stmt> &stmt);                               // Execute statements line by line
 
     void visitBinaryExpr(const Binary &expr) override;
     void visitUnaryExpr(const Unary &expr) override;
@@ -40,7 +46,9 @@ class AstInterpreter : public Visitor
 
     // Calls setInterpretResult() (and getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);
-    std::string stringifyAndPrint(const std::shared_ptr<void> &result, TokenInfo::Type type);
+    virtual void visitExpressionStmt(const Expression &expr) override;
+    virtual void visitPrintStmt(const Print &stmt) override;
+    std::string stringify(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };
 
 #endif // !ASTINTERPRETER_HPP
