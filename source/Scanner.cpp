@@ -216,8 +216,8 @@ void Scanner::string()
     // substr ( start, len )
     std::string str = source.substr(start + 1, current - (start + 1) - 1);
     void *string = new std::string(str);
-    std::cout << "Created memory for string"
-              << "\n";
+    /* std::cout << "Created memory for string" */
+    /*           << "\n"; */
     addToken(TokenInfo::Type::STRING, string);
 }
 
@@ -229,7 +229,7 @@ void Scanner::number()
 
     // If we encounter decimal point and next char after is digit,
     // then continue consumption until we find something not a digit
-    if (isdigit(peek()) == '.' && isdigit(peekNext()))
+    if (peek() == '.' && isdigit(peekNext()))
     {
         // Consume the '.'
         advance();
@@ -242,8 +242,6 @@ void Scanner::number()
     // Parse string into double and store in tokens
     // Create pointer to a double that has value of string converted to double
     void *number = new double(std::stod(source.substr(start, current)));
-    std::cout << "Created memory for number"
-              << "\n";
     addToken(TokenInfo::Type::NUMBER, number);
 }
 

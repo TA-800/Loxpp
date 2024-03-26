@@ -1,5 +1,5 @@
 #include "headers/Loxpp.hpp"
-/* #include "headers/AstPrinter.hpp" */
+#include "headers/AstPrinter.hpp"
 #include "headers/Parser.hpp"
 #include "headers/Scanner.hpp"
 #include "headers/Token.hpp"
@@ -42,17 +42,17 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
-    std::vector<std::string> lines{
-        "!(false)",        "\"ab\" + \"bc\"",     "1 + 2 * 3",           "\"Score: \" + 4",
-        "\"Score: \" * 4", "\"Score: \" + 4 * 5", "4 * 5 + \"Score: \"", "10 + 20 + (10 / 2) + (5 * 2) + 100 * 5"};
+    /* std::vector<std::string> lines{ "!(false)",        "\"ab\" + \"bc\"",     "1 + 2 * 3",           "\"Score: \" +
+     * 4", "\"Score: \" * 4", "\"Score: \" + 4 * 5", "4 * 5 + \"Score: \"", "10 + 20 + (10 / 2) + (5 * 2) + 100 * 5"};
+     */
 
-    int counter = 0;
+    /* int counter = 0; */
     while (true)
     {
 
         std::cout << "> ";
-        /* std::getline(std::cin, line); */
-        line = lines[counter]; // Debugging purposes
+        std::getline(std::cin, line);
+        /* line = lines[counter]; // Debugging purposes */
         if (line.empty())
             break;
 
@@ -62,9 +62,9 @@ void Loxpp::runPrompt()
         if (hadError)
             hadError = false;
 
-        counter++;
-        if (counter == lines.size()) // Debugging purposes
-            break;
+        /* counter++; */
+        /* if (counter == lines.size()) // Debugging purposes */
+        /*     break; */
     }
 }
 
@@ -83,6 +83,9 @@ void Loxpp::run(const std::string &source)
         return;
 
     // Use AST Interpreter to interpret the tokens
+    AstPrinter printer;
+    printer.setPrintResult(expression);
+    std::cout << printer.get() << "\n";
     interpreter.evaluate(expression);
 
     // Free memory (to avoid memory leaks because we are using new with void *)
