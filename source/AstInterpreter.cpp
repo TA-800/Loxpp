@@ -312,8 +312,10 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     case TokenInfo::Type::SLASH: {
         checkNumberOperands(expr.op, leftType, rightType);
         type = TokenInfo::Type::NUMBER;
-        std::shared_ptr<void> tempResult(
-            new double(*static_cast<double *>(left.get()) / *static_cast<double *>(right.get())));
+        double rightVal = *static_cast<double *>(right.get());
+        if (rightVal == 0)
+            throw RuntimeError(expr.op, "Division by zero.");
+        std::shared_ptr<void> tempResult(new double(*static_cast<double *>(left.get()) / rightVal));
         setResult(result, tempResult, type);
         break;
     }
