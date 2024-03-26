@@ -9,8 +9,6 @@ class AstInterpreter : public Visitor
 
     TokenInfo::Type type;         // Type of the literal (string, number, etc.)
     std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
-    std::shared_ptr<void> left;
-    std::shared_ptr<void> right;
 
     bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
     bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
@@ -34,15 +32,15 @@ class AstInterpreter : public Visitor
     TokenInfo::Type getResultType();
 
     // Get value from void pointer and set it to shared_ptr
-    void setResult(std::shared_ptr<void> &value, void *ptr, TokenInfo::Type type);
-    void setResult(std::shared_ptr<void> &value, std::shared_ptr<void> &ptr, TokenInfo::Type type);
+    void setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type);
+    void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
     // Free pointers
     /* void freePointer(void *&ptr); */
 
     // Calls setInterpretResult() (and getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);
-    std::string stringify(const std::shared_ptr<void> &result, TokenInfo::Type type);
+    std::string stringifyAndPrint(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };
 
 #endif // !ASTINTERPRETER_HPP

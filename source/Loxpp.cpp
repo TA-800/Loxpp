@@ -42,7 +42,9 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
-    std::vector<std::string> lines{"!(false)", "\"ab\" + \"bc\"", "1 + 2 * 3"};
+    std::vector<std::string> lines{
+        "!(false)",        "\"ab\" + \"bc\"",     "1 + 2 * 3",           "\"Score: \" + 4",
+        "\"Score: \" * 4", "\"Score: \" + 4 * 5", "4 * 5 + \"Score: \"", "10 + 20 + (10 / 2) + (5 * 2) + 100 * 5"};
 
     int counter = 0;
     while (true)
@@ -61,7 +63,7 @@ void Loxpp::runPrompt()
             hadError = false;
 
         counter++;
-        if (counter == 3) // Debugging purposes
+        if (counter == lines.size()) // Debugging purposes
             break;
     }
 }

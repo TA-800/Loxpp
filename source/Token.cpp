@@ -38,14 +38,14 @@ void Token::freeLiteral()
         if (type == TokenInfo::Type::STRING)
         {
             delete static_cast<std::string *>(literal);
-            std::cout << "Deleted memory for string"
-                      << "\n";
+            /* std::cout << "Deleted memory for string" */
+            /*           << "\n"; */
         }
         else if (type == TokenInfo::Type::NUMBER)
         {
             delete static_cast<double *>(literal);
-            std::cout << "Deleted memory for number"
-                      << "\n";
+            /* std::cout << "Deleted memory for number" */
+            /*           << "\n"; */
         }
     }
 }

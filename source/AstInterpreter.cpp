@@ -1,7 +1,6 @@
 #include "headers/AstInterpreter.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/RuntimeError.hpp"
-#include <cstdlib>
 #include <iostream>
 
 /*
@@ -54,48 +53,48 @@ TokenInfo::Type AstInterpreter::getResultType()
 // For a literal expression, the value is the literal itself
 // Be careful, freeing everything like left and right ptrs that get their result in the end from a literal value
 // will also free the literal value itself held by Tokens array.
-void AstInterpreter::setResult(std::shared_ptr<void> &value, void *ptr, TokenInfo::Type type)
+void AstInterpreter::setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type)
 {
     switch (type)
     {
     case TokenInfo::Type::NUMBER: {
-        value = std::shared_ptr<void>(new double(*(static_cast<double *>(ptr))));
+        toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet))));
         break;
     }
     case TokenInfo::Type::STRING: {
-        value = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(ptr))));
+        toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet))));
         break;
     }
     case TokenInfo::Type::TRUE: {
-        value = std::shared_ptr<void>(new bool(true));
+        toSet = std::shared_ptr<void>(new bool(true));
         break;
     }
     case TokenInfo::Type::FALSE: {
-        value = std::shared_ptr<void>(new bool(false));
+        toSet = std::shared_ptr<void>(new bool(false));
         break;
     }
     case TokenInfo::Type::NIL: {
-        value = std::shared_ptr<void>(nullptr);
+        toSet = std::shared_ptr<void>(nullptr);
         break;
     }
     }
 }
 
-void AstInterpreter::setResult(std::shared_ptr<void> &value, std::shared_ptr<void> &ptr, TokenInfo::Type type)
+void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type)
 {
     switch (type)
     {
     case TokenInfo::Type::NUMBER: {
-        value = std::shared_ptr<void>(new double(*(static_cast<double *>(ptr.get()))));
+        toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet.get()))));
         break;
     }
     case TokenInfo::Type::STRING: {
-        value = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(ptr.get()))));
+        toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet.get()))));
         break;
     }
     case TokenInfo::Type::TRUE:
     case TokenInfo::Type::FALSE: {
-        value = std::shared_ptr<void>(new bool(*(static_cast<bool *>(ptr.get()))));
+        toSet = std::shared_ptr<void>(new bool(*(static_cast<bool *>(toGet.get()))));
         break;
     }
     }
@@ -162,6 +161,7 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
     // Interpret the right expression on which the unary operator is then applied
     setInterpretResult(expr.right);
     TokenInfo::Type rightType = getResultType();
+    std::shared_ptr<void> right;
     setResult(right, getResult(), rightType);
 
     switch (expr.op.getType())
@@ -171,9 +171,8 @@ void AstInterpreter::visitUnaryExpr(const Unary &expr)
         // Negate
         bool newVal = !isTruthy(right, rightType);
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
     case TokenInfo::Type::MINUS: {
@@ -193,11 +192,13 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     // Get left evaluation
     setInterpretResult(expr.left);
     TokenInfo::Type leftType = getResultType();
+    std::shared_ptr<void> left;
     setResult(left, getResult(), leftType);
 
     // Get right evaluation
     setInterpretResult(expr.right);
     TokenInfo::Type rightType = getResultType();
+    std::shared_ptr<void> right;
     setResult(right, getResult(), rightType);
 
     // Switch operator
@@ -209,9 +210,8 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
         checkNumberOperands(expr.op, leftType, rightType);
         bool newVal = *(static_cast<double *>(left.get())) > *(static_cast<double *>(right.get()));
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
     case TokenInfo::Type::GREATER_EQUAL: {
@@ -219,53 +219,48 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
         checkNumberOperands(expr.op, leftType, rightType);
         bool newVal = *(static_cast<double *>(left.get())) >= *(static_cast<double *>(right.get()));
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
     case TokenInfo::Type::LESS: {
         checkNumberOperands(expr.op, leftType, rightType);
         bool newVal = *(static_cast<double *>(left.get())) < *(static_cast<double *>(right.get()));
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
     case TokenInfo::Type::LESS_EQUAL: {
         checkNumberOperands(expr.op, leftType, rightType);
         bool newVal = *(static_cast<double *>(left.get())) <= *(static_cast<double *>(right.get()));
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
 
     case TokenInfo::Type::BANG_EQUAL: {
         bool newVal = !isEqual(left, right, leftType, rightType);
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
     case TokenInfo::Type::EQUAL_EQUAL: {
         bool newVal = isEqual(left, right, leftType, rightType);
         type = newVal ? TokenInfo::Type::TRUE : TokenInfo::Type::FALSE;
-        void *tempResult = new bool(newVal);
+        std::shared_ptr<void> tempResult(new bool(newVal));
         setResult(result, tempResult, type);
-        delete static_cast<bool *>(tempResult);
         break;
     }
 
     case TokenInfo::Type::MINUS: {
         checkNumberOperands(expr.op, leftType, rightType);
         type = TokenInfo::Type::NUMBER;
-        void *tempResult = new double(*static_cast<double *>(left.get()) - *static_cast<double *>(right.get()));
+        std::shared_ptr<void> tempResult(
+            new double(*static_cast<double *>(left.get()) - *static_cast<double *>(right.get())));
         setResult(result, tempResult, type);
-        delete static_cast<double *>(tempResult);
         break;
     }
 
@@ -275,19 +270,35 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
         if (leftType == TokenInfo::Type::NUMBER && rightType == TokenInfo::Type::NUMBER)
         {
             type = TokenInfo::Type::NUMBER;
-            void *tempResult = new double(*static_cast<double *>(left.get()) + *static_cast<double *>(right.get()));
+            std::shared_ptr<void> tempResult(
+                new double(*static_cast<double *>(left.get()) + *static_cast<double *>(right.get())));
             setResult(result, tempResult, type);
-            delete static_cast<double *>(tempResult);
         }
 
         // Concatenate strings
         else if (leftType == TokenInfo::Type::STRING && rightType == TokenInfo::Type::STRING)
         {
             type = TokenInfo::Type::STRING;
-            void *tempResult =
-                new std::string(*static_cast<std::string *>(left.get()) + *static_cast<std::string *>(right.get()));
+            std::shared_ptr<void> tempResult(
+                new std::string(*static_cast<std::string *>(left.get()) + *static_cast<std::string *>(right.get())));
             setResult(result, tempResult, type);
-            delete static_cast<std::string *>(tempResult);
+        }
+        // Convert number to string and concat
+        else if (leftType == TokenInfo::Type::STRING && rightType == TokenInfo::Type::NUMBER)
+        {
+            type = TokenInfo::Type::STRING;
+            // Convert right to number
+            std::shared_ptr<void> tempResult(new std::string(*static_cast<std::string *>(left.get()) +
+                                                             std::to_string(*static_cast<double *>(right.get()))));
+            setResult(result, tempResult, type);
+        }
+        else if (leftType == TokenInfo::Type::STRING && rightType == TokenInfo::Type::NUMBER)
+        {
+            type = TokenInfo::Type::STRING;
+            // Convert left to number
+            std::shared_ptr<void> tempResult(new std::string(std::to_string(*static_cast<double *>(left.get())) +
+                                                             *static_cast<std::string *>(right.get())));
+            setResult(result, tempResult, type);
         }
         else
         {
@@ -301,18 +312,18 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     case TokenInfo::Type::SLASH: {
         checkNumberOperands(expr.op, leftType, rightType);
         type = TokenInfo::Type::NUMBER;
-        void *tempResult = new double(*static_cast<double *>(left.get()) / *static_cast<double *>(right.get()));
+        std::shared_ptr<void> tempResult(
+            new double(*static_cast<double *>(left.get()) / *static_cast<double *>(right.get())));
         setResult(result, tempResult, type);
-        delete static_cast<double *>(tempResult);
         break;
     }
 
     case TokenInfo::Type::STAR: {
         checkNumberOperands(expr.op, leftType, rightType);
         type = TokenInfo::Type::NUMBER;
-        void *tempResult = new double(*static_cast<double *>(left.get()) * *static_cast<double *>(right.get()));
+        std::shared_ptr<void> tempResult(
+            new double(*static_cast<double *>(left.get()) * *static_cast<double *>(right.get())));
         setResult(result, tempResult, type);
-        delete static_cast<double *>(tempResult);
         break;
     }
     }
@@ -325,7 +336,7 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     try
     {
         setInterpretResult(expr);
-        std::cout << stringify(result, type) << "\n";
+        std::cout << stringifyAndPrint(result, type) << "\n";
     }
     catch (RuntimeError &error)
     {
@@ -333,7 +344,7 @@ void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
     }
 }
 
-std::string AstInterpreter::stringify(const std::shared_ptr<void> &result, TokenInfo::Type type)
+std::string AstInterpreter::stringifyAndPrint(const std::shared_ptr<void> &result, TokenInfo::Type type)
 {
     if (result == nullptr)
         return "nil";
