@@ -40,13 +40,20 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
+    std::vector<std::string> lines = {
+        "var a = 5;",
+        "print a;",
+        "print b;",
+    };
 
-    /* int counter = 0; */
+    int counter = 0;
     while (true)
     {
 
         std::cout << "> ";
-        std::getline(std::cin, line);
+        /* std::getline(std::cin, line); */
+        line = lines[counter++];
+        std::cout << line << "\n";
         if (line.empty())
             break;
 
@@ -55,6 +62,9 @@ void Loxpp::runPrompt()
         // Don't kill user session if error, just reset the flag
         if (hadError)
             hadError = false;
+
+        if (counter == lines.size())
+            break;
     }
 }
 

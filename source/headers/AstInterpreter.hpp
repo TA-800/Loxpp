@@ -48,7 +48,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
     // Calls setInterpretResult() (then use getResult) to begin interpreting the AST
-    void evaluate(const std::unique_ptr<Expr> &expr);
+    bool evaluate(const std::unique_ptr<Expr> &expr);
 
     void visitExpressionStmt(const Expression &stmt) override;
     void visitPrintStmt(const Print &stmt) override;

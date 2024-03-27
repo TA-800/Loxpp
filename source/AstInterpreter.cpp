@@ -31,7 +31,7 @@ void AstInterpreter::setInterpretResult(const std::vector<std::unique_ptr<Stmt>>
         for (auto &stmt : statements)
         {
             /* stmt->accept(*this); */
-            execute(stmt);
+            execute(stmt); // Execute whatever statement we got -> expressionStmt, printStmt, varStmt
         }
     }
     catch (RuntimeError &error)
@@ -42,6 +42,7 @@ void AstInterpreter::setInterpretResult(const std::vector<std::unique_ptr<Stmt>>
 
 void AstInterpreter::execute(const std::unique_ptr<Stmt> &stmt)
 {
+    // Figure out what kind of statement we got and run it (printStmt, expressionStmt, varStmt)
     stmt->accept(*this);
 }
 
@@ -123,7 +124,8 @@ void AstInterpreter::visitGroupingExpr(const Grouping &expr)
 void AstInterpreter::visitVariableExpr(const Variable &expr)
 {
     // Get the value of the variable from the environment
-    std::pair<std::shared_ptr<void>, TokenInfo::Type> value = environment->get(expr.name);
+    std::pair<std::shared_ptr<void>, TokenInfo::Type> value =
+        environment->get(expr.name); // Can throw error if not defined
 
     // Set the result to the value of the variable
     setResult(result, value.first, value.second);
@@ -349,16 +351,17 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     return;
 }
 
-void AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
+bool AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
 {
     try
     {
         setInterpretResult(expr);
-        /* std::cout << stringify(result, type) << "\n"; */
+        return true;
     }
     catch (RuntimeError &error)
     {
         Loxpp::runtimeError(error);
+        return false;
     }
 }
 
@@ -369,8 +372,12 @@ void AstInterpreter::visitExpressionStmt(const Expression &stmt)
 
 void AstInterpreter::visitPrintStmt(const Print &stmt)
 {
-    evaluate(stmt.expression);
-    std::cout << stringifyResult(result, type) << "\n";
+    bool successEval = evaluate(stmt.expression);
+    // don't print if evaluation of some expression (like undefined variable) was not successful
+    // error is thrown but caught by evaluate so stringifyResult line is still executed
+    // and will print whatever was the last successfully evaluated value stored by Interpreter
+    if (successEval)
+        std::cout << stringifyResult(result, type) << "\n";
 };
 
 void AstInterpreter::visitVarStmt(const Var &stmt)
