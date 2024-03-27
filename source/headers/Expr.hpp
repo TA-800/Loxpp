@@ -1,91 +1,14 @@
 #ifndef Expr_HPP
 #define Expr_HPP
-
-/*
- * Example code:
- *
-abstract class Expr {
-    interface Visitor<R> {
-        R visitAssignExpr(AssignExpr expr);
-        R visitBinaryExpr(BinaryExpr expr);
-    }
-
-    abstract <R> R accept(Visitor<R> visitor);
-}
-
-class AssignExpr extends Expr {
-    String variable;
-    Expr value;
-
-    AssignExpr(String variable, Expr value) {
-        this.variable = variable;
-        this.value = value;
-    }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-        return visitor.visitAssignExpr(*this);
-    }
-}
-
-class BinaryExpr extends Expr {
-    Expr left;
-    Expr right;
-    String operator;
-
-    BinaryExpr(Expr left, Expr right, String operator) {
-        this.left = left;
-        this.right = right;
-        this.operator = operator;
-    }
-
-    @Override
-    <R> R accept(Visitor<R> visitor) {
-        return visitor.visitBinaryExpr(*this);
-    }
-}
-
-class Evaluator implements Expr.Visitor<Integer> {
-    @Override
-    public Integer visitAssignExpr(AssignExpr expr) {
-        // Evaluate assignment expression
-        // Example: evaluate expression and assign to a variable
-        return 0; // Dummy value for illustration
-    }
-
-    @Override
-    public Integer visitBinaryExpr(BinaryExpr expr) {
-        // Evaluate binary expression
-        // Example: evaluate left and right operands based on operator
-        return 0; // Dummy value for illustration
-    }
-}
-
-public class Main {
-    public static void main(String[] args) {
-        Expr expression = new BinaryExpr(
-            new AssignExpr("x", new LiteralExpr(5)),
-            new AssignExpr("y", new LiteralExpr(10)),
-            "+"
-        );
-
-        Evaluator evaluator = new Evaluator();
-        expression.accept(evaluator);
-    }
-}
- *
- *
- */
-
 #include "Token.hpp"
 #include <memory>
 
-// Forward declaration
 // TODO: Ternary
 class Binary;
 class Grouping;
 class Literal;
 class Unary;
+class Variable;
 
 // Create visitor interface. Every subclass of Expr will implement Visitor to have access to accept method.
 // Visitor can return any type T, example: Integer, String (to try to print an expression), void, etc.
@@ -95,13 +18,14 @@ class Unary;
 class ExprVisitor
 {
   public:
-    virtual void visitBinaryExpr(const Binary &expr) = 0;
-    virtual void visitGroupingExpr(const Grouping &expr) = 0;
-    virtual void visitLiteralExpr(const Literal &expr) = 0;
-    virtual void visitUnaryExpr(const Unary &expr) = 0;
+    virtual void visitBinaryExpr(const Binary &Expr) = 0;
+    virtual void visitGroupingExpr(const Grouping &Expr) = 0;
+    virtual void visitLiteralExpr(const Literal &Expr) = 0;
+    virtual void visitUnaryExpr(const Unary &Expr) = 0;
+    virtual void visitVariableExpr(const Variable &Expr) = 0;
 };
 
-// Abstract class definition
+// Abstract class def
 class Expr
 {
   public:
@@ -109,73 +33,79 @@ class Expr
     virtual void accept(ExprVisitor &visitor) = 0;
 };
 
-// Concrete class definitions
+// Subclasses
 class Binary : public Expr
 {
-
   public:
-    Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
-        : left(std::move(left)), op(op), right(std::move(right))
-    {
-    }
-
     std::unique_ptr<Expr> left;
     Token op;
     std::unique_ptr<Expr> right;
 
+    Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
+        : left(std::move(left)), op(op), right(std::move(right))
+    {
+    }
     void accept(ExprVisitor &visitor) override
     {
         visitor.visitBinaryExpr(*this);
     }
 };
-
-class Unary : public Expr
-{
-
-  public:
-    Unary(Token op, std::unique_ptr<Expr> right) : op(op), right(std::move(right))
-    {
-    }
-
-    Token op;
-    std::unique_ptr<Expr> right;
-
-    void accept(ExprVisitor &visitor) override
-    {
-        visitor.visitUnaryExpr(*this);
-    }
-};
-
-class Literal : public Expr
-{
-  public:
-    Literal(void *value, TokenInfo::Type type) : value(value), type(type)
-    {
-    }
-
-    void *value;
-    TokenInfo::Type type; // (so visitors can know what type of literal it is, e.g. PrintVisitor can safely cast to int
-                          // or string before printing)
-
-    void accept(ExprVisitor &visitor) override
-    {
-        visitor.visitLiteralExpr(*this);
-    }
-};
-
 class Grouping : public Expr
 {
   public:
+    std::unique_ptr<Expr> expression;
+
     Grouping(std::unique_ptr<Expr> expression) : expression(std::move(expression))
     {
     }
-
-    std::unique_ptr<Expr> expression;
-
     void accept(ExprVisitor &visitor) override
     {
         visitor.visitGroupingExpr(*this);
     }
 };
+class Literal : public Expr
+{
+  public:
+    void *value;
+    TokenInfo::Type type; // (so visitor can know how to cast the value to the correct type)
 
+    Literal(void *value, TokenInfo::Type type) : value(value), type(type)
+    {
+    }
+    void accept(ExprVisitor &visitor) override
+    {
+        visitor.visitLiteralExpr(*this);
+    }
+};
+class Unary : public Expr
+{
+  public:
+    Token op;
+    std::unique_ptr<Expr> right;
+
+    Unary(Token op, std::unique_ptr<Expr> right) : op(op), right(std::move(right))
+    {
+    }
+    void accept(ExprVisitor &visitor) override
+    {
+        visitor.visitUnaryExpr(*this);
+    }
+};
+class Variable : public Expr
+{
+  public:
+    Token name;
+    // Type of value held by the variable (e.g. STRING, NUMBER, CLASS, etc.) is stored in the environment
+
+    // Initialize name of variable and its value type to NIL initially
+    Variable(Token name) : name(name)
+    {
+    }
+    void accept(ExprVisitor &visitor) override
+    {
+        // variable expression is simply the value of the variable
+        // e.g. var x = 2 then x would return 2
+        visitor.visitVariableExpr(*this);
+    }
+};
 #endif

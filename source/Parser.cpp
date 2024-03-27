@@ -1,4 +1,5 @@
 #include "headers/Parser.hpp"
+#include "headers/AstInterpreter.hpp"
 #include "headers/ParserError.hpp"
 
 Token Parser::previous() const
@@ -58,6 +59,42 @@ bool Parser::match(const std::vector<TokenInfo::Type> &types)
 std::unique_ptr<Expr> Parser::expression()
 {
     return equality();
+}
+
+std::unique_ptr<Stmt> Parser::varDeclaration()
+{
+    // Once we have entered this function (because "var" token was matched), we expect an identifier
+    Token name = consume(TokenInfo::Type::IDENTIFIER, "Expect variable name.");
+
+    // The value it is initialized to (value can come from an expression -> literal like 1, 2, "hello" or binary like 1
+    // + 2 etc.)
+    std::unique_ptr<Expr> initializer = nullptr;
+
+    if (match({TokenInfo::Type::EQUAL}))
+        initializer = expression();
+
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after variable declaration.");
+
+    // Create a vari
+    return std::make_unique<Var>(name, std::move(initializer));
+}
+
+// declaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+std::unique_ptr<Stmt> Parser::declaration()
+{
+    try
+    {
+        // If the current token is a var, then it is a variable declaration
+        if (match({TokenInfo::Type::VAR}))
+            return varDeclaration();
+
+        // Else some other kind of statement (print, expression, etc.)
+        return statement();
+    }
+    catch (const ParserError &e)
+    {
+        synchronize();
+    }
 }
 
 std::unique_ptr<Stmt> Parser::statement()
@@ -185,6 +222,10 @@ std::unique_ptr<Expr> Parser::primary()
     if (match({TokenInfo::Type::NUMBER, TokenInfo::Type::STRING}))
         return std::make_unique<Literal>((void *)previous().getLiteral(), previous().getType());
 
+    // If we find an identifier, then it is a variable
+    if (match({TokenInfo::Type::IDENTIFIER}))
+        return std::make_unique<Variable>(previous());
+
     // If we find a left parenthesis, we should find right else throw an error
     if (match({TokenInfo::Type::LEFT_PAREN}))
     {
@@ -253,7 +294,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse()
         std::vector<std::unique_ptr<Stmt>> statements;
         while (!isAtEnd())
         {
-            statements.push_back(statement());
+            statements.push_back(declaration());
         }
 
         return statements;

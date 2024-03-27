@@ -120,6 +120,16 @@ void AstInterpreter::visitGroupingExpr(const Grouping &expr)
     setInterpretResult(expr.expression);
 }
 
+void AstInterpreter::visitVariableExpr(const Variable &expr)
+{
+    // Get the value of the variable from the environment
+    std::pair<std::shared_ptr<void>, TokenInfo::Type> value = environment->get(expr.name);
+
+    // Set the result to the value of the variable
+    setResult(result, value.first, value.second);
+    type = value.second;
+}
+
 bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
                              TokenInfo::Type leftType, TokenInfo::Type rightType)
 {
@@ -360,10 +370,25 @@ void AstInterpreter::visitExpressionStmt(const Expression &stmt)
 void AstInterpreter::visitPrintStmt(const Print &stmt)
 {
     evaluate(stmt.expression);
-    std::cout << stringify(result, type) << "\n";
+    std::cout << stringifyResult(result, type) << "\n";
 };
 
-std::string AstInterpreter::stringify(const std::shared_ptr<void> &result, TokenInfo::Type type)
+void AstInterpreter::visitVarStmt(const Var &stmt)
+{
+    std::shared_ptr<void> value = nullptr;
+
+    if (stmt.initializer)
+    {
+        // initializer is an expression. E.g. var a = 5; initializer is literal expression '5'
+        setInterpretResult(stmt.initializer);
+        // Get evaluated value
+        value = getResult();
+    }
+
+    environment->define(stmt.name.getLexeme(), value, getResultType());
+}
+
+std::string AstInterpreter::stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type)
 {
     if (result == nullptr)
         return "nil";

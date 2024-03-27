@@ -14,23 +14,17 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
 int main(int argc, char *argv[])
 {
 
-    /* if (argc != 2) */
-    /* { */
-    /*     std::cerr << "Usage: GenerateAST <output directory>" << "\n"; */
-    /*     return 64; */
-    /* } */
-
-    /* const char *outputDir = argv[1]; */
-    /* std::string outputDir = argv[1]; */
     std::string outputDir = "source/headers";
-    /* const char *baseName = "Expr"; */
-    /* const std::vector<std::string> types = { */
-    /*     "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
-    /*     "Grouping : std::unique_ptr<Expr> expression", "Literal  : void *value", */
-    /*     "Unary    : Token op, std::unique_ptr<Expr> right"}; */
-    const char *baseName = "Stmt";
-    const std::vector<std::string> types = {"Expression : std::unique_ptr<Expr> expression",
-                                            "Print      : std::unique_ptr<Expr> expression"};
+    const char *baseName = "Expr";
+    const std::vector<std::string> types = {
+        "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
+        "Grouping : std::unique_ptr<Expr> expression", "Literal  : TokenInfo::Type type, void *value",
+        "Unary    : Token op, std::unique_ptr<Expr> right", "Variable : Token name, TokenInfo::Type type"};
+    /* const char *baseName = "Stmt"; */
+    /* const std::vector<std::string> types = {"Expression : std::unique_ptr<Expr> expression", */
+    /*                                         "Print      : std::unique_ptr<Expr> expression", */
+    /*                                         "Var        : Token name, std::unique_ptr<Expr> initializer"}; */
+
     defineAst(outputDir, baseName, types);
 };
 
@@ -77,14 +71,17 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
                    << "\n";
     }
 
-    // Visitor class - public: virtual void visitBinaryExpr(Binary &expr) = 0; ...
+    // ExprVisitor or StmtVisitor
     headerFile << "class " << baseName << "Visitor{"
                << "\n";
     headerFile << "public:"
                << "\n";
     for (const std::string &subclassName : subclasses)
     {
-        headerFile << "virtual void visit" << subclassName << "Expr(" << subclassName << " &expr) = 0;"
+        // e.g. virtual void visitBinaryExpr(const Binary &expr) = 0;
+        // e.g. virtual void visitPrintStmt(const Print &stmt) = 0;
+        headerFile << "virtual void visit" << subclassName << baseName << "(const " << subclassName << " &" << baseName
+                   << ") = 0;"
                    << "\n";
     }
     headerFile << " };"
@@ -210,9 +207,10 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
     headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {}"
                << "\n";
 
-    // void accept(Visitor &visitor) override { visitor.visit[className]Expr(*this); }
-    headerFile << "void accept( " << baseName << "Visitor &visitor) override { visitor.visit" << className
-               << "Expr(*this); }"
+    // void accept(Visitor &visitor) override { visitor.visit[className][baseName](*this); }
+    // void accept(Visitor &visitor) override { visitor.visitBinaryExpr(*this); } or visitPrintStmt(*this);
+    headerFile << "void accept( " << baseName << "Visitor &visitor) override { visitor.visit" << className << baseName
+               << "(*this); }"
                << "\n";
 
     // End class

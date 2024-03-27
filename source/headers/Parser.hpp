@@ -7,13 +7,22 @@
 
 /* Grammar:
  *
+ * program → declaration* EOF ;
+ *
+ * declaration → varDeclaration | statement ;
+ * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+ *
+ * statement → printStatement | expressionStatement ;
+ *
+ * expressionStatement → expression ";" ;
+ *
  * expression → equality ;
  * equality → comparison ( ( "!=" | "==" ) comparison )* ;
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term → factor ( ( "-" | "+" ) factor )* ;
  * factor → unary ( ( "/" | "*" ) unary )* ;
  * unary → ( "!" | "-" ) unary | primary ;
- * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+ * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
  *
  */
 
@@ -42,7 +51,10 @@ class Parser
 
     Token consume(TokenInfo::Type type, const std::string &message);
 
-    // Parse tokens into expressions
+    /*
+     * Expression parsing.
+     * Consume tokens to form AST nodes of expressions.
+     */
 
     std::unique_ptr<Expr> expression();
     std::unique_ptr<Expr> equality();
@@ -55,18 +67,26 @@ class Parser
     // Syncronize the parser after an error
     void synchronize();
 
-    // Parse statements
+    /*
+     * Statement parsing.
+     * Consume tokens to form AST nodes of statements.
+     */
+
+    std::unique_ptr<Stmt> varDeclaration();
+    std::unique_ptr<Stmt> declaration();
     std::unique_ptr<Stmt> statement();
     std::unique_ptr<Stmt> printStatement();
     std::unique_ptr<Stmt> expressionStatement();
 
   public:
+    // Constructor. Takes (a reference to but does not modify) a vector of tokens to parse.
     Parser(const std::vector<Token> &tokens) : tokens(tokens)
     {
     }
 
     /*
-     * Parse scanned tokens into expressions to form an abstract syntax tree (AST)
+     * Begin parsing the tokens into AST nodes (statements | declarations | expressions ) that represent the source
+     * code and can be executed.
      */
     std::vector<std::unique_ptr<Stmt>> parse();
 };

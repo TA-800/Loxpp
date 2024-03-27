@@ -1,11 +1,15 @@
 #ifndef ASTINTERPRETER_HPP
 #define ASTINTERPRETER_HPP
 
+#include "Environment.hpp"
 #include "Expr.hpp"
 #include "Stmt.hpp"
 
 class AstInterpreter : public ExprVisitor, StmtVisitor
 {
+
+    std::unique_ptr<Environment> environment = std::make_unique<Environment>();
+
     // Can return any type of value
 
     TokenInfo::Type type;         // Type of the literal (string, number, etc.)
@@ -32,6 +36,8 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitUnaryExpr(const Unary &expr) override;
     void visitLiteralExpr(const Literal &expr) override;
     void visitGroupingExpr(const Grouping &expr) override;
+    void visitVariableExpr(const Variable &expr)
+        override; // Simply returns the value of the variable, e.g. var x = 2 then x would return 2
 
     // Get the result of the interpretation
     std::shared_ptr<void> &getResult();
@@ -41,14 +47,14 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type);
     void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
-    // Free pointers
-    /* void freePointer(void *&ptr); */
-
-    // Calls setInterpretResult() (and getResult) to begin interpreting the AST
+    // Calls setInterpretResult() (then use getResult) to begin interpreting the AST
     void evaluate(const std::unique_ptr<Expr> &expr);
-    virtual void visitExpressionStmt(const Expression &expr) override;
-    virtual void visitPrintStmt(const Print &stmt) override;
-    std::string stringify(const std::shared_ptr<void> &result, TokenInfo::Type type);
+
+    void visitExpressionStmt(const Expression &stmt) override;
+    void visitPrintStmt(const Print &stmt) override;
+    void visitVarStmt(const Var &stmt) override;
+
+    std::string stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };
 
 #endif // !ASTINTERPRETER_HPP
