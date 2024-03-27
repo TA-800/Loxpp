@@ -1,5 +1,4 @@
 #include "headers/Parser.hpp"
-#include "headers/AstInterpreter.hpp"
 #include "headers/ParserError.hpp"
 
 Token Parser::previous() const
@@ -93,7 +92,11 @@ std::unique_ptr<Stmt> Parser::declaration()
     }
     catch (const ParserError &e)
     {
+        // If there was an error in parsing tokens, don't throw error but attempt to
+        // "synchronize"
         synchronize();
+
+        return nullptr;
     }
 }
 
@@ -250,11 +253,8 @@ Token Parser::consume(TokenInfo::Type type, const std::string &message)
         return advance();
     }
 
-    /* error(peek(), message); */
     throw ParserError(peek(), message);
 }
-
-// void Parser::error( )
 
 void Parser::synchronize()
 {
@@ -301,7 +301,6 @@ std::vector<std::unique_ptr<Stmt>> Parser::parse()
     }
     catch (const ParserError &error)
     {
-        /* synchronize(); */
         return {};
     }
 }

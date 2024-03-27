@@ -41,9 +41,6 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
-    /* std::vector<std::string> lines{ "!(false)",        "\"ab\" + \"bc\"",     "1 + 2 * 3",           "\"Score: \" +
-     * 4", "\"Score: \" * 4", "\"Score: \" + 4 * 5", "4 * 5 + \"Score: \"", "10 + 20 + (10 / 2) + (5 * 2) + 100 * 5"};
-     */
 
     /* int counter = 0; */
     while (true)
@@ -51,7 +48,6 @@ void Loxpp::runPrompt()
 
         std::cout << "> ";
         std::getline(std::cin, line);
-        /* line = lines[counter]; // Debugging purposes */
         if (line.empty())
             break;
 
@@ -60,10 +56,6 @@ void Loxpp::runPrompt()
         // Don't kill user session if error, just reset the flag
         if (hadError)
             hadError = false;
-
-        /* counter++; */
-        /* if (counter == lines.size()) // Debugging purposes */
-        /*     break; */
     }
 }
 
@@ -75,7 +67,6 @@ void Loxpp::run(const std::string &source)
 
     // Parse tokens into expressions
     Parser parser(tokens);
-    /* std::unique_ptr<Expr> expression = parser.parse(); */
     std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
 
     // If there was an error, don't run the interpreter
@@ -83,9 +74,7 @@ void Loxpp::run(const std::string &source)
         return;
 
     // Use AST Interpreter to interpret the tokens
-    /* AstPrinter printer; */
-    /* printer.setPrintResult(statements); */
-    /* std::cout << printer.get() << "\n"; */
+    /* AstPrinter printer; printer.setPrintResult(statements); std::cout << printer.get() << "\n"; */
 
     interpreter.setInterpretResult(statements);
 
