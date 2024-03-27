@@ -38,6 +38,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitGroupingExpr(const Grouping &expr) override;
     void visitVariableExpr(const Variable &expr)
         override; // Simply returns the value of the variable, e.g. var x = 2 then x would return 2
+    void visitAssignExpr(const Assign &expr) override;
 
     // Get the result of the interpretation
     std::shared_ptr<void> &getResult();

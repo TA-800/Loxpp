@@ -27,6 +27,9 @@
  *
  */
 
+/*
+ * Reads tokens from the input source code and constructs an Abstract Syntax Tree (AST) out of it.
+ */
 class Parser
 {
 
@@ -58,6 +61,7 @@ class Parser
      */
 
     std::unique_ptr<Expr> expression();
+    std::unique_ptr<Expr> assignment();
     std::unique_ptr<Expr> equality();
     std::unique_ptr<Expr> comparison();
     std::unique_ptr<Expr> term();

@@ -1,4 +1,5 @@
 #include "headers/Parser.hpp"
+#include "headers/Loxpp.hpp"
 #include "headers/ParserError.hpp"
 
 Token Parser::previous() const
@@ -52,33 +53,11 @@ bool Parser::match(const std::vector<TokenInfo::Type> &types)
     return false;
 }
 
-// Run tokens with grammar rules to form expressions
 // TODO: Ternary grammar rule
 
-std::unique_ptr<Expr> Parser::expression()
-{
-    return equality();
-}
+// Run tokens with grammar rules to form expressions
 
-std::unique_ptr<Stmt> Parser::varDeclaration()
-{
-    // Once we have entered this function (because "var" token was matched), we expect an identifier
-    Token name = consume(TokenInfo::Type::IDENTIFIER, "Expect variable name.");
-
-    // The value it is initialized to (value can come from an expression -> literal like 1, 2, "hello" or binary like 1
-    // + 2 etc.)
-    std::unique_ptr<Expr> initializer = nullptr;
-
-    if (match({TokenInfo::Type::EQUAL}))
-        initializer = expression();
-
-    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after variable declaration.");
-
-    // Create a vari
-    return std::make_unique<Var>(name, std::move(initializer));
-}
-
-// declaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+// declaration → varDeclaration | statement ;
 std::unique_ptr<Stmt> Parser::declaration()
 {
     try
@@ -100,6 +79,25 @@ std::unique_ptr<Stmt> Parser::declaration()
     }
 }
 
+// varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+std::unique_ptr<Stmt> Parser::varDeclaration()
+{
+    // Once we have entered this function (because "var" token was matched), we expect an identifier
+    Token name = consume(TokenInfo::Type::IDENTIFIER, "Expect variable name.");
+
+    // The value it is initialized to (value can come from an expression -> literal like 1, 2, "hello" or binary like 1
+    // + 2 etc.)
+    std::unique_ptr<Expr> initializer = nullptr;
+
+    if (match({TokenInfo::Type::EQUAL}))
+        initializer = expression();
+
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after variable declaration.");
+
+    // Create a vari
+    return std::make_unique<Var>(name, std::move(initializer));
+}
+
 std::unique_ptr<Stmt> Parser::statement()
 {
     // Check if the current token is a print statement
@@ -110,6 +108,7 @@ std::unique_ptr<Stmt> Parser::statement()
     return expressionStatement();
 }
 
+// printStatement → "print" expression ";" ;
 std::unique_ptr<Stmt> Parser::printStatement()
 {
     // Some expression whose value has been computed (interpreted)
@@ -122,9 +121,10 @@ std::unique_ptr<Stmt> Parser::printStatement()
     return std::make_unique<Print>(std::move(value));
 }
 
+// expressionStatement → expression ";" ;
 std::unique_ptr<Stmt> Parser::expressionStatement()
 {
-    // Some expression whose value has been computed (interpreted)
+    // Some expression that has been formed into an AST Expr node
     std::unique_ptr<Expr> value = expression();
 
     // After a statement, there should be a semicolon
@@ -132,6 +132,40 @@ std::unique_ptr<Stmt> Parser::expressionStatement()
 
     // Return a valid statement
     return std::make_unique<Expression>(std::move(value));
+}
+
+std::unique_ptr<Expr> Parser::expression()
+{
+    /* return equality(); */
+    return assignment();
+}
+
+std::unique_ptr<Expr> Parser::assignment()
+{
+    std::unique_ptr<Expr> expr = equality();
+
+    // If we have an equal sign, then it is an assignment
+    if (match({TokenInfo::Type::EQUAL}))
+    {
+        Token equals = previous();
+        std::unique_ptr<Expr> value = assignment();
+
+        // Check if expr is a variable expression
+        // If it was then expr returned from equality would be pointer of Variable class
+        // Reference: https://stackoverflow.com/a/307801
+        if (dynamic_cast<Variable *>(expr.get()) != nullptr)
+        {
+            Token name = static_cast<Variable *>(expr.get())->name;
+            return std::make_unique<Assign>(name, std::move(value));
+        }
+
+        // If it was not a variable expression, and we're at this point (because we had a equals '=' sign for
+        // assignment) then error
+        Loxpp::error(equals, "Invalid assignment target.");
+        // don't throw error because parser is not in "confused" state
+    }
+
+    return expr;
 }
 
 // equality → comparison ( ( "!=" | "==" ) comparison )* ;
@@ -212,7 +246,7 @@ std::unique_ptr<Expr> Parser::unary()
     }
 }
 
-// primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
+// primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
 std::unique_ptr<Expr> Parser::primary()
 {
     if (match({TokenInfo::Type::FALSE}))

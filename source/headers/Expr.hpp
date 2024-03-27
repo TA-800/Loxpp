@@ -4,6 +4,7 @@
 #include <memory>
 
 // TODO: Ternary
+class Assign;
 class Binary;
 class Grouping;
 class Literal;
@@ -18,22 +19,33 @@ class Variable;
 class ExprVisitor
 {
   public:
+    virtual void visitAssignExpr(const Assign &Expr) = 0;
     virtual void visitBinaryExpr(const Binary &Expr) = 0;
     virtual void visitGroupingExpr(const Grouping &Expr) = 0;
     virtual void visitLiteralExpr(const Literal &Expr) = 0;
     virtual void visitUnaryExpr(const Unary &Expr) = 0;
     virtual void visitVariableExpr(const Variable &Expr) = 0;
 };
-
-// Abstract class def
 class Expr
 {
   public:
     virtual ~Expr() = default;
     virtual void accept(ExprVisitor &visitor) = 0;
 };
+class Assign : public Expr
+{
+  public:
+    Token name;
+    std::unique_ptr<Expr> value;
 
-// Subclasses
+    Assign(Token name, std::unique_ptr<Expr> value) : name(name), value(std::move(value))
+    {
+    }
+    void accept(ExprVisitor &visitor) override
+    {
+        visitor.visitAssignExpr(*this);
+    }
+};
 class Binary : public Expr
 {
   public:
@@ -66,10 +78,10 @@ class Grouping : public Expr
 class Literal : public Expr
 {
   public:
+    TokenInfo::Type type;
     void *value;
-    TokenInfo::Type type; // (so visitor can know how to cast the value to the correct type)
 
-    Literal(void *value, TokenInfo::Type type) : value(value), type(type)
+    Literal(void *value, TokenInfo::Type type) : type(type), value(value)
     {
     }
     void accept(ExprVisitor &visitor) override
@@ -94,10 +106,11 @@ class Unary : public Expr
 class Variable : public Expr
 {
   public:
-    Token name;
     // Type of value held by the variable (e.g. STRING, NUMBER, CLASS, etc.) is stored in the environment
 
     // Initialize name of variable and its value type to NIL initially
+    Token name;
+
     Variable(Token name) : name(name)
     {
     }

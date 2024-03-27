@@ -19,6 +19,9 @@ class Environment
 
     // Define a variable in the current environment.
     void define(std::string name, std::shared_ptr<void> value, TokenInfo::Type type);
+
+    // Assign a new value to a variable in the current environment.
+    void assign(Token name, std::shared_ptr<void> value, TokenInfo::Type type);
 };
 
 #endif

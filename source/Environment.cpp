@@ -16,3 +16,15 @@ void Environment::define(std::string name, std::shared_ptr<void> value, TokenInf
 {
     values[name] = std::make_pair(value, type);
 }
+
+// Key difference: do not create a new var if it doesn't exist
+void Environment::assign(Token name, std::shared_ptr<void> value, TokenInfo::Type type)
+{
+    if (values.find(name.getLexeme()) != values.end())
+    {
+        values[name.getLexeme()] = std::make_pair(value, type);
+        return;
+    }
+
+    throw RuntimeError(name, "Undefined variable '" + name.getLexeme() + "'.");
+}

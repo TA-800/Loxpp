@@ -132,6 +132,15 @@ void AstInterpreter::visitVariableExpr(const Variable &expr)
     type = value.second;
 }
 
+void AstInterpreter::visitAssignExpr(const Assign &expr)
+{
+    // Evaluate the right hand side of the assignment
+    setInterpretResult(expr.value);
+
+    // Set the value of the variable in the environment
+    environment->assign(expr.name, getResult(), getResultType());
+}
+
 bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
                              TokenInfo::Type leftType, TokenInfo::Type rightType)
 {
