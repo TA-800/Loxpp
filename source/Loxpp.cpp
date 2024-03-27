@@ -27,7 +27,6 @@ int Loxpp::runFile(const std::string &path)
     // Run the source code
     run(std::string(bytes.begin(), bytes.end()));
 
-    // If error (can be set by run() if error occurs)
     if (hadError)
         return 65;
     if (hadRuntimeError)
@@ -69,9 +68,13 @@ void Loxpp::run(const std::string &source)
     Parser parser(tokens);
     std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
 
-    // If there was an error, don't run the interpreter
+    // If there was an error, don't run the interpreter and ensure memory created by scanner for tokens (literals) is
+    // freed
     if (hadError)
+    {
+        scanner.freeTokens();
         return;
+    }
 
     // Use AST Interpreter to interpret the tokens
     /* AstPrinter printer; printer.setPrintResult(statements); std::cout << printer.get() << "\n"; */

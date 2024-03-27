@@ -11,13 +11,14 @@ int main(int argc, char *argv[])
     {
         std::cout << "Usage: loxpp [script]"
                   << "\n";
-        exit(64);
+        /* exit(64); */
+        return 64;
     }
     // Script
     else if (argc == 2)
     {
         int result = Loxpp::runFile(argv[1]);
-        exit(result);
+        return result;
     }
     // Interactive session
     else
