@@ -17,3 +17,7 @@ The template system introduced too much complexity that I'm still not famililar 
 2. Specifics about the implementation?
 
 Used modern C++ features like RAII (smart pointers) and more.
+
+3. Any differences from Lox in the book?
+
+Falsey values in Lox are only false or nil. Lox++ considers 0 and empty string as falsey values as well.

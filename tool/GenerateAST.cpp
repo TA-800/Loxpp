@@ -15,24 +15,25 @@ int main(int argc, char *argv[])
 {
 
     std::string outputDir = "source/headers";
-    const char *baseName = "Expr";
+    /* const char *baseName = "Expr"; */
+    /* const std::vector<std::string> types = { */
+    /*     "Assign   : Token name, std::unique_ptr<Expr> value", */
+    /*     "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
+    /*     "Grouping : std::unique_ptr<Expr> expression", */
+    /*     "Literal  : TokenInfo::Type type, void *value", */
+    /*     "Logical  : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
+    /*     "Unary    : Token op, std::unique_ptr<Expr> right", */
+    /*     "Variable : Token name", */
+    /* }; */
+    const char *baseName = "Stmt";
     const std::vector<std::string> types = {
-        "Assign   : Token name, std::unique_ptr<Expr> value",
-        "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
-        "Grouping : std::unique_ptr<Expr> expression",
-        "Literal  : TokenInfo::Type type, void *value",
-        "Logical  : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
-        "Unary    : Token op, std::unique_ptr<Expr> right",
-        "Variable : Token name",
+        "If : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch",
+        "While : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body",
+        "Block      : std::vector<std::unique_ptr<Stmt>> statements",
+        "Expression : std::unique_ptr<Expr> expression",
+        "Print      : std::unique_ptr<Expr> expression",
+        "Var        : Token name, std::unique_ptr<Expr> initializer",
     };
-    /* const char *baseName = "Stmt";
-     * const std::vector<std::string> types = {
-     *     "If : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch",
-     *     "Block      : std::vector<std::unique_ptr<Stmt>> statements",
-     *     "Expression : std::unique_ptr<Expr> expression",
-     *     "Print      : std::unique_ptr<Expr> expression",
-     *     "Var        : Token name, std::unique_ptr<Expr> initializer",
-     * }; */
 
     defineAst(outputDir, baseName, types);
 };
@@ -61,16 +62,17 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
         subclasses.push_back(className);
     }
 
-    // Include guard
+    // Includes
     headerFile << "#ifndef " << baseName << "_HPP"
                << "\n";
     headerFile << "#define " << baseName << "_HPP"
-               << "\n";
-    // Include Token.hpp
+               << "\n\n";
     headerFile << "#include \"Token.hpp\""
                << "\n";
-    headerFile << "#include <memory>"
+    headerFile << "#include \"Expr.hpp\""
                << "\n";
+    headerFile << "#include <memory>"
+               << "\n\n";
 
     // Forward declarations
     // e.g. class Binary; class Grouping; class Literal; class Unary;
@@ -132,27 +134,6 @@ void defineAst(std::string &outputDir, const char *baseName, const std::vector<s
 void defineType(std::ofstream &headerFile, const char *baseName, const std::string &className,
                 const std::string &fieldList)
 {
-    /* Write class definition
-     * class Binary : public Expr
-     * {
-     *
-     *   public:
-     *     Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
-     *         : left(std::move(left)), op(op), right(std::move(right))
-     *     {
-     *     }
-     *
-     *     std::unique_ptr<Expr> left;
-     *     Token op;
-     *     std::unique_ptr<Expr> right;
-     *
-     *     void accept(Visitor &visitor) override
-     *     {
-     *         visitor.visitBinaryExpr(*this);
-     *     }
-     * }
-     */
-
     // Extract the fields
     // Vector of <type, name>, e.g. {Expr, left}, {Token, op}, {Expr, right}
     std::vector<std::pair<std::string, std::string>> fields;
@@ -177,6 +158,7 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
                << "\n";
     headerFile << "public:"
                << "\n";
+    std::pair<bool, std::string> hasVectorOfUnqPtr = {false, ""};
 
     // Define the fields
     // E.g. Expr left; Token op; Expr right;
@@ -186,8 +168,15 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
                    << "\n";
         constructorParams += field.first + " " + field.second;
 
+        // If type contains vector of unique_ptr then manually construct the vector
+        if (field.first.find("vector<std::unique_ptr") != std::string::npos)
+        {
+            hasVectorOfUnqPtr.first = true;          // Set flag to true
+            hasVectorOfUnqPtr.second = field.second; // Set name to vector name
+        }
+
         // If type contains "unique_ptr" then use move for initialization, else copy
-        if (field.first.find("unique_ptr") != std::string::npos)
+        else if (field.first.find("unique_ptr") != std::string::npos)
             initializationParams += field.second + "(std::move(" + field.second + "))";
         else
         {
@@ -213,11 +202,19 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
 
     // E.g. Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right) :
     // left(std::move(left)), op(op), right(std::move(right)) {}
-    headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {}"
+    headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {"
+               << "\n";
+    if (hasVectorOfUnqPtr.first)
+    {
+        headerFile << "for (auto &stmt : " << hasVectorOfUnqPtr.second << ")"
+                   << "\n";
+        headerFile << "{ this->" << hasVectorOfUnqPtr.second << ".push_back(std::move(stmt)); }"
+                   << "\n";
+    }
+    headerFile << "}"
                << "\n";
 
     // void accept(Visitor &visitor) override { visitor.visit[className][baseName](*this); }
-    // void accept(Visitor &visitor) override { visitor.visitBinaryExpr(*this); } or visitPrintStmt(*this);
     headerFile << "void accept( " << baseName << "Visitor &visitor) override { visitor.visit" << className << baseName
                << "(*this); }"
                << "\n";

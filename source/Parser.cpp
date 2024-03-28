@@ -110,6 +110,10 @@ std::unique_ptr<Stmt> Parser::statement()
     if (match({TokenInfo::Type::PRINT}))
         return printStatement();
 
+    // Check if the current token is a while statement
+    if (match({TokenInfo::Type::WHILE}))
+        return whileStatement();
+
     if (match({TokenInfo::Type::LEFT_BRACE}))
         // Block is a type of statement (containing multiple statements)
         return std::make_unique<Block>(block());
@@ -145,6 +149,18 @@ std::unique_ptr<Stmt> Parser::ifStatement()
         elseBranch = statement();
 
     return std::make_unique<If>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
+}
+
+// whileStmt → "while" "(" expression ")" statement ;
+std::unique_ptr<Stmt> Parser::whileStatement()
+{
+    consume(TokenInfo::Type::LEFT_PAREN, "Expect '(' after 'while'.");
+    std::unique_ptr<Expr> condition = expression();
+    consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after condition.");
+
+    std::unique_ptr<Stmt> body = statement();
+
+    return std::make_unique<While>(std::move(condition), std::move(body));
 }
 
 // printStatement → "print" expression ";" ;

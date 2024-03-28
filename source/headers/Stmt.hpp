@@ -1,19 +1,16 @@
 #ifndef Stmt_HPP
 #define Stmt_HPP
+
 #include "Expr.hpp"
 #include "Token.hpp"
 #include <memory>
 
-// Expression evaluates to a value
-class Expression;
-
-// Statement that has a side effect
-class Print; // Side effect is printing to the console
+class Var;
+class While; // Side effect is looping
 class If;    // Side effect is conditional branching
 class Block; // Side effect is grouping multiple stmts (into one)
-
-// Statement that defines a variable
-class Var;
+class Print; // Side effect is printing to the console
+class Expression;
 
 // Create visitor interface. Every tree walker (interpreter, printer) that implements StmtVisitor will be able to do
 // something useful with different types of Stmts it wants to parse.
@@ -21,6 +18,7 @@ class StmtVisitor
 {
   public:
     virtual void visitIfStmt(const If &Stmt) = 0;
+    virtual void visitWhileStmt(const While &Stmt) = 0;
     virtual void visitBlockStmt(const Block &Stmt) = 0;
     virtual void visitExpressionStmt(const Expression &Stmt) = 0;
     virtual void visitPrintStmt(const Print &Stmt) = 0;
@@ -48,9 +46,21 @@ class If : public Stmt
         visitor.visitIfStmt(*this);
     }
 };
+class While : public Stmt
+{
+  public:
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> body;
 
-// Block acts a single statement but contains multiple statements
-// NOTE: The generator script does not initalize the vector of statements in the constructor
+    While(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body)
+        : condition(std::move(condition)), body(std::move(body))
+    {
+    }
+    void accept(StmtVisitor &visitor) override
+    {
+        visitor.visitWhileStmt(*this);
+    }
+};
 class Block : public Stmt
 {
   public:
@@ -59,8 +69,6 @@ class Block : public Stmt
 
     Block(std::vector<std::unique_ptr<Stmt>> statements)
     {
-        // vector creates copy of elements, unique_ptr does not allow copy
-        // so permanently move elements from statements to this->statements
         for (auto &stmt : statements)
         {
             this->statements.push_back(std::move(stmt));
@@ -71,7 +79,6 @@ class Block : public Stmt
         visitor.visitBlockStmt(*this);
     }
 };
-
 class Expression : public Stmt
 {
   public:

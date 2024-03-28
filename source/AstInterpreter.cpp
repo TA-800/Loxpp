@@ -28,7 +28,7 @@ bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::share
 
 bool AstInterpreter::isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type)
 {
-    if (value == nullptr)
+    if (type == TokenInfo::Type::NIL)
         return false;
 
     // If it's a number, check if it's not equal to 0
@@ -444,6 +444,20 @@ void AstInterpreter::visitIfStmt(const If &stmt)
     // Else, if there was an else branch, execute it
     else if (stmt.elseBranch != nullptr)
         execute(stmt.elseBranch);
+}
+
+void AstInterpreter::visitWhileStmt(const While &stmt)
+{
+
+    evaluate(stmt.condition);
+    while (isTruthy(getResult(), getResultType()))
+    {
+        // Execute while loop body
+        execute(stmt.body);
+
+        // Run condition check again
+        evaluate(stmt.condition);
+    }
 }
 
 void AstInterpreter::visitPrintStmt(const Print &stmt)
