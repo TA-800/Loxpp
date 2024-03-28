@@ -11,6 +11,8 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
  * It is tedious to write all the Expr subclasses that represent the AST nodes.
  * This script will generate the classes for us.
  */
+
+// TODO: Change to references in constructor params list
 int main(int argc, char *argv[])
 {
 

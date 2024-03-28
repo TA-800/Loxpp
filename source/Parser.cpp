@@ -97,7 +97,7 @@ std::unique_ptr<Stmt> Parser::varDeclaration()
     consume(TokenInfo::Type::SEMICOLON, "Expect ';' after variable declaration.");
 
     // Create a vari
-    return std::make_unique<Var>(name, std::move(initializer));
+    return std::make_unique<Var>(name, initializer);
 }
 
 std::unique_ptr<Stmt> Parser::statement()
@@ -119,8 +119,11 @@ std::unique_ptr<Stmt> Parser::statement()
         return whileStatement();
 
     if (match({TokenInfo::Type::LEFT_BRACE}))
+    {
         // Block is a type of statement (containing multiple statements)
-        return std::make_unique<Block>(block());
+        auto b = block();
+        return std::make_unique<Block>(b);
+    }
 
     // Otherwise, it is an expression statement
     return expressionStatement();
@@ -152,7 +155,7 @@ std::unique_ptr<Stmt> Parser::ifStatement()
     if (match({TokenInfo::Type::ELSE}))
         elseBranch = statement();
 
-    return std::make_unique<If>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
+    return std::make_unique<If>(condition, thenBranch, elseBranch);
 }
 
 // forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
@@ -197,13 +200,13 @@ std::unique_ptr<Stmt> Parser::forStatement()
     // Use while loop to simulate for loop
     // Take the whole for loop clauses and body and put them in a while loop
 
-    std::vector<std::unique_ptr<Stmt>> blockStatements;
-    blockStatements.push_back(std::move(body));
+    std::vector<std::unique_ptr<Stmt>> whileBody;
+    whileBody.push_back(std::move(body));
     if (increment != nullptr)
     {
         // Take the increment assignment (e.g. i = i + 1) and make it the last thing to take place in the while
         // (disguised as for) loop
-        blockStatements.push_back(std::make_unique<Expression>(std::move(increment)));
+        whileBody.push_back(std::make_unique<Expression>(increment));
     }
 
     if (condition == nullptr)
@@ -212,25 +215,23 @@ std::unique_ptr<Stmt> Parser::forStatement()
         condition = std::make_unique<Literal>(nullptr, TokenInfo::Type::TRUE);
     }
 
-    // Take the condition and body and put them in a while loop
-    std::unique_ptr<While> whileLoop =
-        std::make_unique<While>(std::move(condition), std::make_unique<Block>(std::move(blockStatements)));
+    // Convert whileBody to a block statement
+    std::unique_ptr<Stmt> whileBodyBlock = std::make_unique<Block>(whileBody);
 
+    // Take the condition and body and put them in a while loop
+    std::unique_ptr<Stmt> whileLoop = std::make_unique<While>(condition, whileBodyBlock);
+
+    // Construct the final for loop statement
+    std::vector<std::unique_ptr<Stmt>> forStmt;
     if (initializer != nullptr)
     {
         // If there is an initializer, put it before the while loop.
         // Compile everything into a block statement -> initializer -> while with condition { body }
-        std::vector<std::unique_ptr<Stmt>> forLoopStmts;
-        forLoopStmts.push_back(std::move(initializer));
-        forLoopStmts.push_back(std::move(whileLoop));
-        body = std::make_unique<Block>(std::move(forLoopStmts));
+        forStmt.push_back(std::move(initializer)); // initializer
     }
-    else
-    {
-        body = std::move(whileLoop);
-    }
+    forStmt.push_back(std::move(whileLoop)); // while loop
 
-    return body;
+    return std::make_unique<Block>(forStmt); // convert into a block statement
 }
 
 // whileStmt → "while" "(" expression ")" statement ;
@@ -242,7 +243,7 @@ std::unique_ptr<Stmt> Parser::whileStatement()
 
     std::unique_ptr<Stmt> body = statement();
 
-    return std::make_unique<While>(std::move(condition), std::move(body));
+    return std::make_unique<While>(condition, body);
 }
 
 // printStatement → "print" expression ";" ;
@@ -255,7 +256,7 @@ std::unique_ptr<Stmt> Parser::printStatement()
     consume(TokenInfo::Type::SEMICOLON, "Expect ';' after value.");
 
     // Return a valid statement
-    return std::make_unique<Print>(std::move(value));
+    return std::make_unique<Print>(value);
 }
 
 // expressionStatement → expression ";" ;
@@ -268,7 +269,7 @@ std::unique_ptr<Stmt> Parser::expressionStatement()
     consume(TokenInfo::Type::SEMICOLON, "Expect ';' after expression.");
 
     // Return a valid statement
-    return std::make_unique<Expression>(std::move(value));
+    return std::make_unique<Expression>(value);
 }
 
 std::unique_ptr<Expr> Parser::expression()
@@ -292,7 +293,7 @@ std::unique_ptr<Expr> Parser::assignment()
         if (dynamic_cast<Variable *>(expr.get()) != nullptr)
         {
             Token name = static_cast<Variable *>(expr.get())->name;
-            return std::make_unique<Assign>(name, std::move(value));
+            return std::make_unique<Assign>(name, value);
         }
 
         // If it was not a variable expression, and we're at this point (because we had a equals '=' sign for
@@ -312,7 +313,7 @@ std::unique_ptr<Expr> Parser::logicalOr()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = logicalAnd();
-        expr = std::make_unique<Logical>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Logical>(expr, op, right);
     }
 
     return expr;
@@ -326,7 +327,7 @@ std::unique_ptr<Expr> Parser::logicalAnd()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = equality();
-        expr = std::make_unique<Logical>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Logical>(expr, op, right);
     }
 
     return expr;
@@ -343,7 +344,7 @@ std::unique_ptr<Expr> Parser::equality()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = comparison();
-        expr = std::make_unique<Binary>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Binary>(expr, op, right);
     }
 
     return expr;
@@ -359,7 +360,7 @@ std::unique_ptr<Expr> Parser::comparison()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = term();
-        expr = std::make_unique<Binary>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Binary>(expr, op, right);
     }
 
     return expr;
@@ -374,7 +375,7 @@ std::unique_ptr<Expr> Parser::term()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = factor();
-        expr = std::make_unique<Binary>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Binary>(expr, op, right);
     }
 
     return expr;
@@ -389,7 +390,7 @@ std::unique_ptr<Expr> Parser::factor()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = unary();
-        expr = std::make_unique<Binary>(std::move(expr), op, std::move(right));
+        expr = std::make_unique<Binary>(expr, op, right);
     }
 
     return expr;
@@ -402,7 +403,7 @@ std::unique_ptr<Expr> Parser::unary()
     {
         Token op = previous();
         std::unique_ptr<Expr> right = unary();
-        return std::make_unique<Unary>(op, std::move(right));
+        return std::make_unique<Unary>(op, right);
     }
     else
     {
@@ -437,7 +438,7 @@ std::unique_ptr<Expr> Parser::primary()
         consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after expression.");
 
         // If we've reached here, we've found a valid grouping
-        return std::make_unique<Grouping>(std::move(expr));
+        return std::make_unique<Grouping>(expr);
     }
 
     // If we've reached here, then throw an error because we couldn't find a valid expression to put into AST

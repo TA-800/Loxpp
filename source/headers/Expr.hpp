@@ -40,7 +40,7 @@ class Assign : public Expr
     Token name;
     std::unique_ptr<Expr> value;
 
-    Assign(Token name, std::unique_ptr<Expr> value) : name(name), value(std::move(value))
+    Assign(Token name, std::unique_ptr<Expr> &value) : name(name), value(std::move(value))
     {
     }
     void accept(ExprVisitor &visitor) override
@@ -55,7 +55,7 @@ class Binary : public Expr
     Token op;
     std::unique_ptr<Expr> right;
 
-    Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
+    Binary(std::unique_ptr<Expr> &left, Token op, std::unique_ptr<Expr> &right)
         : left(std::move(left)), op(op), right(std::move(right))
     {
     }
@@ -69,7 +69,7 @@ class Grouping : public Expr
   public:
     std::unique_ptr<Expr> expression;
 
-    Grouping(std::unique_ptr<Expr> expression) : expression(std::move(expression))
+    Grouping(std::unique_ptr<Expr> &expression) : expression(std::move(expression))
     {
     }
     void accept(ExprVisitor &visitor) override
@@ -91,6 +91,7 @@ class Literal : public Expr
         visitor.visitLiteralExpr(*this);
     }
 };
+
 class Logical : public Expr
 {
   public:
@@ -98,7 +99,7 @@ class Logical : public Expr
     Token op;
     std::unique_ptr<Expr> right;
 
-    Logical(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
+    Logical(std::unique_ptr<Expr> &left, Token op, std::unique_ptr<Expr> &right)
         : left(std::move(left)), op(op), right(std::move(right))
     {
     }
@@ -113,7 +114,7 @@ class Unary : public Expr
     Token op;
     std::unique_ptr<Expr> right;
 
-    Unary(Token op, std::unique_ptr<Expr> right) : op(op), right(std::move(right))
+    Unary(Token op, std::unique_ptr<Expr> &right) : op(op), right(std::move(right))
     {
     }
     void accept(ExprVisitor &visitor) override
