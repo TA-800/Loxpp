@@ -126,6 +126,9 @@ void AstInterpreter::visitVariableExpr(const Variable &expr)
     std::pair<std::shared_ptr<void>, TokenInfo::Type> value =
         environment->get(expr.name); // Can throw error if not defined
 
+    if (value.second == TokenInfo::Type::UNINITIALIZED)
+        throw RuntimeError(expr.name, "Variable used before being initialized.");
+
     // Set the result to the value of the variable
     setResult(result, value.first, value.second);
     type = value.second;
@@ -423,6 +426,7 @@ void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &stat
 void AstInterpreter::visitVarStmt(const Var &stmt)
 {
     std::shared_ptr<void> value = nullptr;
+    TokenInfo::Type valtype = TokenInfo::Type::UNINITIALIZED;
 
     if (stmt.initializer)
     {
@@ -430,9 +434,10 @@ void AstInterpreter::visitVarStmt(const Var &stmt)
         setInterpretResult(stmt.initializer);
         // Get evaluated value
         value = getResult();
+        valtype = getResultType();
     }
 
-    environment->define(stmt.name.getLexeme(), value, getResultType());
+    environment->define(stmt.name.getLexeme(), value, valtype);
 }
 
 std::string AstInterpreter::stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type)

@@ -57,6 +57,7 @@ class TokenInfo
         TRUE,
         VAR,
         WHILE,
+        UNINITIALIZED,
 
         // EOF reserved word
         END_OF_FILE
