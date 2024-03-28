@@ -398,15 +398,17 @@ void AstInterpreter::visitBlockStmt(const Block &stmt)
 void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
                                   const std::shared_ptr<Environment> &localEnv)
 {
-    // Save the current environment (scope) before entering block (local) scope
+    // Create a pointer to temporarily store the previous environment (scope) before entering block (local) scope
     std::shared_ptr<Environment> previous = this->environment;
 
     try
     {
+        // Set the current environment (scope) to the local environment (scope) for the block
         this->environment = localEnv;
 
         for (const std::unique_ptr<Stmt> &statement : statements)
         {
+            // Execute statements in the block with the local environment (scope)
             execute(statement);
         }
     }

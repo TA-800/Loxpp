@@ -121,6 +121,7 @@ std::vector<std::unique_ptr<Stmt>> Parser::block()
         statements.push_back(declaration());
     }
 
+    consume(TokenInfo::Type::RIGHT_BRACE, "Expect '}' after block.");
     return statements;
 }
 

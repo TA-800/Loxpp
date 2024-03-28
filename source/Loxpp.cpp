@@ -41,9 +41,7 @@ void Loxpp::runPrompt()
 {
     std::string line;
     /* std::vector<std::string> lines = { */
-    /*     "var a = 5;", */
-    /*     "print a;", */
-    /*     "print b;", */
+    /*     "var a = 5;", "{", "  var a = 6;", "  print a;", "}", "print a;", */
     /* }; */
 
     int counter = 0;
@@ -74,7 +72,7 @@ void Loxpp::run(const std::string &source)
     Scanner scanner(source);
     std::vector<Token> tokens = scanner.scanTokens();
 
-    // Parse tokens into expressions
+    // Parse tokens into AST statements and expressions
     Parser parser(tokens);
     std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
 
