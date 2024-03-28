@@ -175,13 +175,12 @@ std::unique_ptr<Stmt> Parser::expressionStatement()
 
 std::unique_ptr<Expr> Parser::expression()
 {
-    /* return equality(); */
     return assignment();
 }
 
 std::unique_ptr<Expr> Parser::assignment()
 {
-    std::unique_ptr<Expr> expr = equality();
+    std::unique_ptr<Expr> expr = logicalOr();
 
     // If we have an equal sign, then it is an assignment
     if (match({TokenInfo::Type::EQUAL}))
@@ -202,6 +201,34 @@ std::unique_ptr<Expr> Parser::assignment()
         // assignment) then error
         Loxpp::error(equals, "Invalid assignment target.");
         // don't throw error because parser is not in "confused" state
+    }
+
+    return expr;
+}
+
+std::unique_ptr<Expr> Parser::logicalOr()
+{
+    std::unique_ptr<Expr> expr = logicalAnd();
+
+    while (match({TokenInfo::Type::OR}))
+    {
+        Token op = previous();
+        std::unique_ptr<Expr> right = logicalAnd();
+        expr = std::make_unique<Logical>(std::move(expr), op, std::move(right));
+    }
+
+    return expr;
+}
+
+std::unique_ptr<Expr> Parser::logicalAnd()
+{
+    std::unique_ptr<Expr> expr = equality();
+
+    while (match({TokenInfo::Type::AND}))
+    {
+        Token op = previous();
+        std::unique_ptr<Expr> right = equality();
+        expr = std::make_unique<Logical>(std::move(expr), op, std::move(right));
     }
 
     return expr;

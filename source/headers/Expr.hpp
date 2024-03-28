@@ -8,6 +8,7 @@ class Assign;
 class Binary;
 class Grouping;
 class Literal;
+class Logical;
 class Unary;
 class Variable;
 
@@ -23,6 +24,7 @@ class ExprVisitor
     virtual void visitBinaryExpr(const Binary &Expr) = 0;
     virtual void visitGroupingExpr(const Grouping &Expr) = 0;
     virtual void visitLiteralExpr(const Literal &Expr) = 0;
+    virtual void visitLogicalExpr(const Logical &Expr) = 0;
     virtual void visitUnaryExpr(const Unary &Expr) = 0;
     virtual void visitVariableExpr(const Variable &Expr) = 0;
 };
@@ -89,6 +91,22 @@ class Literal : public Expr
         visitor.visitLiteralExpr(*this);
     }
 };
+class Logical : public Expr
+{
+  public:
+    std::unique_ptr<Expr> left;
+    Token op;
+    std::unique_ptr<Expr> right;
+
+    Logical(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right)
+        : left(std::move(left)), op(op), right(std::move(right))
+    {
+    }
+    void accept(ExprVisitor &visitor) override
+    {
+        visitor.visitLogicalExpr(*this);
+    }
+};
 class Unary : public Expr
 {
   public:
@@ -107,8 +125,6 @@ class Variable : public Expr
 {
   public:
     // Type of value held by the variable (e.g. STRING, NUMBER, CLASS, etc.) is stored in the environment
-
-    // Initialize name of variable and its value type to NIL initially
     Token name;
 
     Variable(Token name) : name(name)

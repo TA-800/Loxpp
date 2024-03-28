@@ -34,13 +34,8 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
                       const std::shared_ptr<Environment> &localEnv); // Execute blocks (e.g. if, while, for, etc.
 
-    void visitBinaryExpr(const Binary &expr) override;
-    void visitUnaryExpr(const Unary &expr) override;
-    void visitLiteralExpr(const Literal &expr) override;
-    void visitGroupingExpr(const Grouping &expr) override;
-    void visitVariableExpr(const Variable &expr)
-        override; // Simply returns the value of the variable, e.g. var x = 2 then x would return 2
-    void visitAssignExpr(const Assign &expr) override;
+    // Calls setInterpretResult() (then use getResult) to begin interpreting the AST
+    bool evaluate(const std::unique_ptr<Expr> &expr);
 
     // Get the result of the interpretation
     std::shared_ptr<void> &getResult();
@@ -50,8 +45,14 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type);
     void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
-    // Calls setInterpretResult() (then use getResult) to begin interpreting the AST
-    bool evaluate(const std::unique_ptr<Expr> &expr);
+    void visitBinaryExpr(const Binary &expr) override;
+    void visitUnaryExpr(const Unary &expr) override;
+    void visitLiteralExpr(const Literal &expr) override;
+    void visitGroupingExpr(const Grouping &expr) override;
+    void visitVariableExpr(const Variable &expr)
+        override; // Simply returns the value of the variable, e.g. var x = 2 then x would return 2
+    void visitAssignExpr(const Assign &expr) override;
+    void visitLogicalExpr(const Logical &expr) override;
 
     void visitExpressionStmt(const Expression &stmt) override;
     void visitIfStmt(const If &stmt) override;

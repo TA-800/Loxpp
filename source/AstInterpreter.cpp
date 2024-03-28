@@ -5,6 +5,47 @@
 #include <iostream>
 #include <memory>
 
+bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
+                             TokenInfo::Type leftType, TokenInfo::Type rightType)
+{
+    if (left == nullptr && right == nullptr)
+        return true;
+
+    // If bools, check if they are equal
+    if (leftType != rightType)
+        return false;
+
+    // If both are numbers, check if they are equal
+    if (leftType == TokenInfo::Type::NUMBER)
+        return *static_cast<double *>(left.get()) == *static_cast<double *>(right.get());
+
+    // If both are strings, check if they are equal
+    if (leftType == TokenInfo::Type::STRING)
+        return *static_cast<std::string *>(left.get()) == *static_cast<std::string *>(right.get());
+
+    return false;
+}
+
+bool AstInterpreter::isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type)
+{
+    if (value == nullptr)
+        return false;
+
+    // If it's a number, check if it's not equal to 0
+    if (type == TokenInfo::Type::NUMBER)
+        return *static_cast<double *>(value.get()) != 0;
+
+    // If it's a string, check if it's not empty
+    else if (type == TokenInfo::Type::STRING)
+        return !static_cast<std::string *>(value.get())->empty();
+
+    // If's a boolean holding false value
+    else if (type == TokenInfo::Type::FALSE)
+        return false;
+
+    return true;
+}
+
 void AstInterpreter::checkNumberOperand(const Token &op, TokenInfo::Type rightType)
 {
     if (rightType == TokenInfo::Type::NUMBER)
@@ -45,6 +86,45 @@ void AstInterpreter::execute(const std::unique_ptr<Stmt> &stmt)
 {
     // Figure out what kind of statement we got and run it (printStmt, expressionStmt, varStmt)
     stmt->accept(*this);
+}
+
+void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
+                                  const std::shared_ptr<Environment> &localEnv)
+{
+    // Create a pointer to temporarily store the previous environment (scope) before entering block (local) scope
+    std::shared_ptr<Environment> previous = this->environment;
+
+    try
+    {
+        // Set the current environment (scope) to the local environment (scope) for the block
+        this->environment = localEnv;
+
+        for (const std::unique_ptr<Stmt> &statement : statements)
+        {
+            // Execute statements in the block with the local environment (scope)
+            execute(statement);
+        }
+    }
+    catch (RuntimeError &error)
+    {
+    }
+
+    // Restore the previous environment (scope) before exiting block (local) scope
+    this->environment = previous;
+}
+
+bool AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
+{
+    try
+    {
+        setInterpretResult(expr);
+        return true;
+    }
+    catch (RuntimeError &error)
+    {
+        Loxpp::runtimeError(error);
+        return false;
+    }
 }
 
 std::shared_ptr<void> &AstInterpreter::getResult()
@@ -142,48 +222,6 @@ void AstInterpreter::visitAssignExpr(const Assign &expr)
     // Set the value of the variable in the environment
     environment->assign(expr.name, getResult(), getResultType());
 }
-
-bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
-                             TokenInfo::Type leftType, TokenInfo::Type rightType)
-{
-    if (left == nullptr && right == nullptr)
-        return true;
-
-    // If bools, check if they are equal
-    if (leftType != rightType)
-        return false;
-
-    // If both are numbers, check if they are equal
-    if (leftType == TokenInfo::Type::NUMBER)
-        return *static_cast<double *>(left.get()) == *static_cast<double *>(right.get());
-
-    // If both are strings, check if they are equal
-    if (leftType == TokenInfo::Type::STRING)
-        return *static_cast<std::string *>(left.get()) == *static_cast<std::string *>(right.get());
-
-    return false;
-}
-
-bool AstInterpreter::isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type)
-{
-    if (value == nullptr)
-        return false;
-
-    // If it's a number, check if it's not equal to 0
-    if (type == TokenInfo::Type::NUMBER)
-        return *static_cast<double *>(value.get()) != 0;
-
-    // If it's a string, check if it's not empty
-    else if (type == TokenInfo::Type::STRING)
-        return !static_cast<std::string *>(value.get())->empty();
-
-    // If's a boolean holding false value
-    else if (type == TokenInfo::Type::FALSE)
-        return false;
-
-    return true;
-}
-
 // Unary expression
 void AstInterpreter::visitUnaryExpr(const Unary &expr)
 {
@@ -362,24 +400,37 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     return;
 }
 
-bool AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
-{
-    try
-    {
-        setInterpretResult(expr);
-        return true;
-    }
-    catch (RuntimeError &error)
-    {
-        Loxpp::runtimeError(error);
-        return false;
-    }
-}
-
 void AstInterpreter::visitExpressionStmt(const Expression &stmt)
 {
     evaluate(stmt.expression);
 };
+
+void AstInterpreter::visitLogicalExpr(const Logical &expr)
+{
+
+    // Evaluate left side of the expression
+    evaluate(expr.left);
+
+    if (expr.op.getType() == TokenInfo::Type::OR)
+    {
+        if (isTruthy(getResult(), getResultType()))
+        {
+            // If the left side is true, we don't need to evaluate right side
+            return;
+        }
+    }
+    else
+    {
+        if (!isTruthy(getResult(), getResultType()))
+        {
+            // If left side is false, we don't need to evaluate right side
+            return;
+        }
+    }
+
+    // Evaluate right side of the expression
+    evaluate(expr.right);
+}
 
 void AstInterpreter::visitIfStmt(const If &stmt)
 {
@@ -410,31 +461,6 @@ void AstInterpreter::visitBlockStmt(const Block &stmt)
     // Create new local environment for block
     std::shared_ptr<Environment> localEnv = std::make_shared<Environment>(this->environment);
     executeBlock(stmt.statements, localEnv);
-}
-
-void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
-                                  const std::shared_ptr<Environment> &localEnv)
-{
-    // Create a pointer to temporarily store the previous environment (scope) before entering block (local) scope
-    std::shared_ptr<Environment> previous = this->environment;
-
-    try
-    {
-        // Set the current environment (scope) to the local environment (scope) for the block
-        this->environment = localEnv;
-
-        for (const std::unique_ptr<Stmt> &statement : statements)
-        {
-            // Execute statements in the block with the local environment (scope)
-            execute(statement);
-        }
-    }
-    catch (RuntimeError &error)
-    {
-    }
-
-    // Restore the previous environment (scope) before exiting block (local) scope
-    this->environment = previous;
 }
 
 void AstInterpreter::visitVarStmt(const Var &stmt)
