@@ -8,12 +8,12 @@
 class AstInterpreter : public ExprVisitor, StmtVisitor
 {
 
-    std::unique_ptr<Environment> environment = std::make_unique<Environment>();
+    // Global environment for the interpreter
+    std::shared_ptr<Environment> environment = std::make_shared<Environment>();
 
-    // Can return any type of value
-
-    TokenInfo::Type type;         // Type of the literal (string, number, etc.)
+    // Result of the interpretation
     std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
+    TokenInfo::Type type;         // Can return any type of value. Type of the literal (string, number, etc.)
 
     bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
     bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
@@ -31,6 +31,8 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void setInterpretResult(const std::unique_ptr<Expr> &expr);                    // For expressions
     void setInterpretResult(const std::vector<std::unique_ptr<Stmt>> &statements); // For statements
     void execute(const std::unique_ptr<Stmt> &stmt);                               // Execute statements line by line
+    void executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
+                      const std::shared_ptr<Environment> &localEnv); // Execute blocks (e.g. if, while, for, etc.
 
     void visitBinaryExpr(const Binary &expr) override;
     void visitUnaryExpr(const Unary &expr) override;
@@ -54,6 +56,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitExpressionStmt(const Expression &stmt) override;
     void visitPrintStmt(const Print &stmt) override;
     void visitVarStmt(const Var &stmt) override;
+    void visitBlockStmt(const Block &stmt) override;
 
     std::string stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };

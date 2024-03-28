@@ -15,18 +15,21 @@ int main(int argc, char *argv[])
 {
 
     std::string outputDir = "source/headers";
-    const char *baseName = "Expr";
+    /* const char *baseName = "Expr"; */
+    /* const std::vector<std::string> types = { */
+    /*     "Assign   : Token name, std::unique_ptr<Expr> value", */
+    /*     "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
+    /*     "Grouping : std::unique_ptr<Expr> expression", */
+    /*     "Literal  : TokenInfo::Type type, void *value", */
+    /*     "Unary    : Token op, std::unique_ptr<Expr> right", */
+    /*     "Variable : Token name", }; */
+    const char *baseName = "Stmt";
     const std::vector<std::string> types = {
-        "Assign   : Token name, std::unique_ptr<Expr> value",
-        "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right",
-        "Grouping : std::unique_ptr<Expr> expression",
-        "Literal  : TokenInfo::Type type, void *value",
-        "Unary    : Token op, std::unique_ptr<Expr> right",
-        "Variable : Token name"};
-    /* const char *baseName = "Stmt"; */
-    /* const std::vector<std::string> types = {"Expression : std::unique_ptr<Expr> expression", */
-    /*                                         "Print      : std::unique_ptr<Expr> expression", */
-    /*                                         "Var        : Token name, std::unique_ptr<Expr> initializer"}; */
+        "Block      : std::vector<std::unique_ptr<Stmt>> statements",
+        "Expression : std::unique_ptr<Expr> expression",
+        "Print      : std::unique_ptr<Expr> expression",
+        "Var        : Token name, std::unique_ptr<Expr> initializer",
+    };
 
     defineAst(outputDir, baseName, types);
 };

@@ -1,7 +1,9 @@
 #include "headers/AstInterpreter.hpp"
+#include "headers/Environment.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/RuntimeError.hpp"
 #include <iostream>
+#include <memory>
 
 void AstInterpreter::checkNumberOperand(const Token &op, TokenInfo::Type rightType)
 {
@@ -30,7 +32,6 @@ void AstInterpreter::setInterpretResult(const std::vector<std::unique_ptr<Stmt>>
     {
         for (auto &stmt : statements)
         {
-            /* stmt->accept(*this); */
             execute(stmt); // Execute whatever statement we got -> expressionStmt, printStmt, varStmt
         }
     }
@@ -58,8 +59,6 @@ TokenInfo::Type AstInterpreter::getResultType()
 
 // Simplest interpretable expression
 // For a literal expression, the value is the literal itself
-// Be careful, freeing everything like left and right ptrs that get their result in the end from a literal value
-// will also free the literal value itself held by Tokens array.
 void AstInterpreter::setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type)
 {
     switch (type)
@@ -388,6 +387,36 @@ void AstInterpreter::visitPrintStmt(const Print &stmt)
     if (successEval)
         std::cout << stringifyResult(result, type) << "\n";
 };
+
+void AstInterpreter::visitBlockStmt(const Block &stmt)
+{
+    // Create new local environment for block
+    std::shared_ptr<Environment> localEnv = std::make_shared<Environment>(this->environment);
+    executeBlock(stmt.statements, localEnv);
+}
+
+void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &statements,
+                                  const std::shared_ptr<Environment> &localEnv)
+{
+    // Save the current environment (scope) before entering block (local) scope
+    std::shared_ptr<Environment> previous = this->environment;
+
+    try
+    {
+        this->environment = localEnv;
+
+        for (const std::unique_ptr<Stmt> &statement : statements)
+        {
+            execute(statement);
+        }
+    }
+    catch (RuntimeError &error)
+    {
+    }
+
+    // Restore the previous environment (scope) before exiting block (local) scope
+    this->environment = previous;
+}
 
 void AstInterpreter::visitVarStmt(const Var &stmt)
 {

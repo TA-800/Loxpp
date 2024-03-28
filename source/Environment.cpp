@@ -9,11 +9,18 @@ std::pair<std::shared_ptr<void>, TokenInfo::Type> Environment::get(Token name)
         return values[name.getLexeme()];
     }
 
+    // Check enclosing env recursively.
+    if (enclosing != nullptr)
+    {
+        return enclosing->get(name);
+    }
+
     throw RuntimeError(name, "Undefined variable '" + name.getLexeme() + "'.");
 }
 
 void Environment::define(std::string name, std::shared_ptr<void> value, TokenInfo::Type type)
 {
+    // Always define in the current env (local).
     values[name] = std::make_pair(value, type);
 }
 
@@ -23,6 +30,13 @@ void Environment::assign(Token name, std::shared_ptr<void> value, TokenInfo::Typ
     if (values.find(name.getLexeme()) != values.end())
     {
         values[name.getLexeme()] = std::make_pair(value, type);
+        return;
+    }
+
+    // Check enclosing env recursively.
+    if (enclosing != nullptr)
+    {
+        enclosing->assign(name, value, type);
         return;
     }
 

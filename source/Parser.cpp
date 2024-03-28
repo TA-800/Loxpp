@@ -104,8 +104,24 @@ std::unique_ptr<Stmt> Parser::statement()
     if (match({TokenInfo::Type::PRINT}))
         return printStatement();
 
+    if (match({TokenInfo::Type::LEFT_BRACE}))
+        // Block is a type of statement (containing multiple statements)
+        return std::make_unique<Block>(block());
+
     // Otherwise, it is an expression statement
     return expressionStatement();
+}
+
+std::vector<std::unique_ptr<Stmt>> Parser::block()
+{
+    std::vector<std::unique_ptr<Stmt>> statements;
+
+    while (!check(TokenInfo::Type::RIGHT_BRACE) && !isAtEnd())
+    {
+        statements.push_back(declaration());
+    }
+
+    return statements;
 }
 
 // printStatement → "print" expression ";" ;
