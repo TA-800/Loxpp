@@ -110,6 +110,10 @@ std::unique_ptr<Stmt> Parser::statement()
     if (match({TokenInfo::Type::PRINT}))
         return printStatement();
 
+    // Check if the current token is a for statement
+    if (match({TokenInfo::Type::FOR}))
+        return forStatement();
+
     // Check if the current token is a while statement
     if (match({TokenInfo::Type::WHILE}))
         return whileStatement();
@@ -149,6 +153,84 @@ std::unique_ptr<Stmt> Parser::ifStatement()
         elseBranch = statement();
 
     return std::make_unique<If>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
+}
+
+// forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
+std::unique_ptr<Stmt> Parser::forStatement()
+{
+
+    consume(TokenInfo::Type::LEFT_PAREN, "Expect '(' after 'for'.");
+
+    // INITIALIZER --------
+
+    std::unique_ptr<Stmt> initializer;
+    if (match({TokenInfo::Type::SEMICOLON}))
+        initializer = nullptr;
+
+    else if (match({TokenInfo::Type::VAR}))
+        initializer = varDeclaration();
+
+    else
+        initializer = expressionStatement();
+
+    // CONDITION --------
+
+    std::unique_ptr<Expr> condition = nullptr;
+    if (!check(TokenInfo::Type::SEMICOLON))
+        condition = expression();
+
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after loop condition.");
+
+    // INCREMENT --------
+
+    std::unique_ptr<Expr> increment = nullptr;
+    if (!check(TokenInfo::Type::RIGHT_PAREN))
+        increment = expression();
+
+    consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after for clauses.");
+
+    // BODY --------
+
+    std::unique_ptr<Stmt> body = statement();
+
+    // DESUGAR --------
+    // Use while loop to simulate for loop
+    // Take the whole for loop clauses and body and put them in a while loop
+
+    std::vector<std::unique_ptr<Stmt>> blockStatements;
+    blockStatements.push_back(std::move(body));
+    if (increment != nullptr)
+    {
+        // Take the increment assignment (e.g. i = i + 1) and make it the last thing to take place in the while
+        // (disguised as for) loop
+        blockStatements.push_back(std::make_unique<Expression>(std::move(increment)));
+    }
+
+    if (condition == nullptr)
+    {
+        // If there is no condition, make it true (infinite loop)
+        condition = std::make_unique<Literal>(nullptr, TokenInfo::Type::TRUE);
+    }
+
+    // Take the condition and body and put them in a while loop
+    std::unique_ptr<While> whileLoop =
+        std::make_unique<While>(std::move(condition), std::make_unique<Block>(std::move(blockStatements)));
+
+    if (initializer != nullptr)
+    {
+        // If there is an initializer, put it before the while loop.
+        // Compile everything into a block statement -> initializer -> while with condition { body }
+        std::vector<std::unique_ptr<Stmt>> forLoopStmts;
+        forLoopStmts.push_back(std::move(initializer));
+        forLoopStmts.push_back(std::move(whileLoop));
+        body = std::make_unique<Block>(std::move(forLoopStmts));
+    }
+    else
+    {
+        body = std::move(whileLoop);
+    }
+
+    return body;
 }
 
 // whileStmt → "while" "(" expression ")" statement ;

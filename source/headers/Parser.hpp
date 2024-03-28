@@ -12,15 +12,16 @@
  * declaration → varDeclaration | statement ;
  * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
- * statement → ifStmt | whileStmt | printStmt | expressionStmt | block ;
+ * statement → ifStmt | forStmt | whileStmt | printStmt | exprStmt | block ;
  *
  * ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
  *
+ * forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
  * whileStmt → "while" "(" expression ")" statement ;"
  *
  * block → "{" declaration* "}" ;
  *
- * expressionStatement → expression ";" ;
+ * exprStmt → expression ";" ;
  *
  * expression → assignment ;
  * assignment → IDENTIFIER "=" assignment | logic_or ;
@@ -92,6 +93,7 @@ class Parser
     std::unique_ptr<Stmt> declaration();
     std::unique_ptr<Stmt> statement();
     std::unique_ptr<Stmt> ifStatement();
+    std::unique_ptr<Stmt> forStatement();
     std::unique_ptr<Stmt> whileStatement();
     std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Stmt> printStatement();
