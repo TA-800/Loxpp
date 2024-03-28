@@ -1,4 +1,5 @@
 #include "headers/AstInterpreter.hpp"
+#include "headers/BreakError.hpp"
 #include "headers/Environment.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/RuntimeError.hpp"
@@ -450,14 +451,27 @@ void AstInterpreter::visitWhileStmt(const While &stmt)
 {
 
     evaluate(stmt.condition);
-    while (isTruthy(getResult(), getResultType()))
+    try
     {
-        // Execute while loop body
-        execute(stmt.body);
+        while (isTruthy(getResult(), getResultType()))
+        {
+            // Execute while loop body
+            execute(stmt.body);
 
-        // Run condition check again
-        evaluate(stmt.condition);
+            // Run condition check again
+            evaluate(stmt.condition);
+        }
     }
+    catch (BreakError &e)
+    {
+        // BreakError is intentionally thrown to break out of loop.
+        // Just catch it here to gracefully exit the loop, no need to do anything.
+    }
+}
+
+void AstInterpreter::visitBreakStmt(const Break &stmt)
+{
+    throw BreakError();
 }
 
 void AstInterpreter::visitPrintStmt(const Print &stmt)

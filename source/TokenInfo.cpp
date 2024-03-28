@@ -18,7 +18,7 @@ const std::vector<std::string> TokenInfo::TypeStrings = {
 
     // Keywords.
     "AND", "CLASS", "ELSE", "FALSE", "FUN", "FOR", "IF", "NIL", "OR", "PRINT", "RETURN", "SUPER", "THIS", "TRUE", "VAR",
-    "WHILE",
+    "WHILE", "BREAK", "UNINITIALIZED",
 
     // EOF reserved word
     "END_OF_FILE"};
@@ -30,8 +30,8 @@ std::string TokenInfo::getTypeString(Type type)
 
 TokenInfo::Type TokenInfo::getKeywordOrIdentifier(std::string &type)
 {
-    // From "and" to "while"
-    for (int i = 22; i < 38; i++)
+    // From "and" to "uninitialized" are keywords.
+    for (int i = 22; i < 40; i++)
     {
         // Lowercase the string from TypeStrings vector.
         std::string lower = TypeStrings[i];

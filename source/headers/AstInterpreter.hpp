@@ -57,9 +57,11 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitExpressionStmt(const Expression &stmt) override;
     void visitIfStmt(const If &stmt) override;
     void visitWhileStmt(const While &stmt) override;
+    void visitBreakStmt(const Break &stmt) override;
     void visitPrintStmt(const Print &stmt) override;
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block &stmt) override;
+    // Break reference: https://github.com/munificent/craftinginterpreters/issues/119
 
     std::string stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type);
 };

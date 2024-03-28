@@ -112,11 +112,23 @@ std::unique_ptr<Stmt> Parser::statement()
 
     // Check if the current token is a for statement
     if (match({TokenInfo::Type::FOR}))
-        return forStatement();
+    {
+        auto forStmt = forStatement();
+        loopDepth--;
+        return forStmt;
+    }
 
     // Check if the current token is a while statement
     if (match({TokenInfo::Type::WHILE}))
-        return whileStatement();
+    {
+        auto whileStmt = whileStatement();
+        loopDepth--;
+        return whileStmt;
+    }
+
+    // Check if the current token is a break statement
+    if (match({TokenInfo::Type::BREAK}))
+        return breakStatement();
 
     if (match({TokenInfo::Type::LEFT_BRACE}))
     {
@@ -194,6 +206,7 @@ std::unique_ptr<Stmt> Parser::forStatement()
 
     // BODY --------
 
+    loopDepth++;
     std::unique_ptr<Stmt> body = statement();
 
     // DESUGAR --------
@@ -241,9 +254,21 @@ std::unique_ptr<Stmt> Parser::whileStatement()
     std::unique_ptr<Expr> condition = expression();
     consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after condition.");
 
+    loopDepth++;
     std::unique_ptr<Stmt> body = statement();
 
     return std::make_unique<While>(condition, body);
+}
+
+// breakStmt → "break" ";" ;
+std::unique_ptr<Stmt> Parser::breakStatement()
+{
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after 'break'.");
+
+    if (loopDepth == 0) // If there is no loop to break out of
+        Loxpp::error(previous(), "Cannot use 'break' outside of a loop.");
+
+    return std::make_unique<Break>();
 }
 
 // printStatement → "print" expression ";" ;

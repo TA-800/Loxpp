@@ -69,7 +69,7 @@ void Scanner::scanToken()
         addToken(TokenInfo::Type::STAR);
         break;
 
-    // Single or double character lexemes
+    // Double character lexemes
     case '!':
         addToken(match('=') ? TokenInfo::Type::BANG_EQUAL : TokenInfo::Type::BANG);
         break;

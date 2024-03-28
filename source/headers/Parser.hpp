@@ -12,14 +12,13 @@
  * declaration → varDeclaration | statement ;
  * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
- * statement → ifStmt | forStmt | whileStmt | printStmt | exprStmt | block ;
+ * statement → ifStmt | forStmt | whileStmt | breakStmt | printStmt | exprStmt | block ;
  *
  * ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
  *
  * forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
  * whileStmt → "while" "(" expression ")" statement ;"
- *
- * block → "{" declaration* "}" ;
+ * breakStmt → "break" ";"
  *
  * exprStmt → expression ";" ;
  *
@@ -45,6 +44,7 @@ class Parser
 
     const std::vector<Token> tokens;
     int current = 0;
+    int loopDepth = 0; // Track nested loops for break statements.
 
     /* Match current token with any given types. If true, consume (move to next token) and return true. Otherwise,
      * return false.
@@ -95,6 +95,7 @@ class Parser
     std::unique_ptr<Stmt> ifStatement();
     std::unique_ptr<Stmt> forStatement();
     std::unique_ptr<Stmt> whileStatement();
+    std::unique_ptr<Stmt> breakStatement();
     std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Stmt> printStatement();
     std::unique_ptr<Stmt> expressionStatement();

@@ -57,6 +57,7 @@ class TokenInfo
         TRUE,
         VAR,
         WHILE,
+        BREAK,
         UNINITIALIZED,
 
         // EOF reserved word

@@ -7,6 +7,7 @@
 
 class Var;
 class While; // Side effect is looping
+class Break;
 class If;    // Side effect is conditional branching
 class Block; // Side effect is grouping multiple stmts (into one)
 class Print; // Side effect is printing to the console
@@ -19,6 +20,7 @@ class StmtVisitor
   public:
     virtual void visitIfStmt(const If &Stmt) = 0;
     virtual void visitWhileStmt(const While &Stmt) = 0;
+    virtual void visitBreakStmt(const Break &Stmt) = 0;
     virtual void visitBlockStmt(const Block &Stmt) = 0;
     virtual void visitExpressionStmt(const Expression &Stmt) = 0;
     virtual void visitPrintStmt(const Print &Stmt) = 0;
@@ -30,6 +32,7 @@ class Stmt
     virtual ~Stmt() = default;
     virtual void accept(StmtVisitor &visitor) = 0;
 };
+
 class If : public Stmt
 {
   public:
@@ -46,6 +49,17 @@ class If : public Stmt
         visitor.visitIfStmt(*this);
     }
 };
+
+class Break : public Stmt
+{
+  public:
+    // No ctor because no params
+    void accept(StmtVisitor &visitor) override
+    {
+        visitor.visitBreakStmt(*this);
+    }
+};
+
 class While : public Stmt
 {
   public:

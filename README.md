@@ -4,9 +4,13 @@ This is a C++14 implementation of the Lox interpreter ( from the book "Crafting 
 
 ## Features
 
+Challenges in the book to implement new features:
+
 1. Multiline nested comments
 
 2. String and number concatenation
+
+3. Break statement to quit loops early
 
 ## Notes
 
