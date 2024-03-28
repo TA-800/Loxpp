@@ -54,6 +54,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     bool evaluate(const std::unique_ptr<Expr> &expr);
 
     void visitExpressionStmt(const Expression &stmt) override;
+    void visitIfStmt(const If &stmt) override;
     void visitPrintStmt(const Print &stmt) override;
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block &stmt) override;

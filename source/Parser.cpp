@@ -1,6 +1,8 @@
 #include "headers/Parser.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/ParserError.hpp"
+#include "headers/Stmt.hpp"
+#include <memory>
 
 Token Parser::previous() const
 {
@@ -100,6 +102,10 @@ std::unique_ptr<Stmt> Parser::varDeclaration()
 
 std::unique_ptr<Stmt> Parser::statement()
 {
+    // Check if current token is an IF statement
+    if (match({TokenInfo::Type::IF}))
+        return ifStatement();
+
     // Check if the current token is a print statement
     if (match({TokenInfo::Type::PRINT}))
         return printStatement();
@@ -123,6 +129,22 @@ std::vector<std::unique_ptr<Stmt>> Parser::block()
 
     consume(TokenInfo::Type::RIGHT_BRACE, "Expect '}' after block.");
     return statements;
+}
+
+// ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
+std::unique_ptr<Stmt> Parser::ifStatement()
+{
+
+    consume(TokenInfo::Type::LEFT_PAREN, "Expect '(' after 'if'.");
+    std::unique_ptr<Expr> condition = expression();
+    consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after 'if'.");
+
+    std::unique_ptr<Stmt> thenBranch = statement();
+    std::unique_ptr<Stmt> elseBranch = nullptr;
+    if (match({TokenInfo::Type::ELSE}))
+        elseBranch = statement();
+
+    return std::make_unique<If>(std::move(condition), std::move(thenBranch), std::move(elseBranch));
 }
 
 // printStatement → "print" expression ";" ;

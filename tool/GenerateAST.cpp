@@ -25,6 +25,7 @@ int main(int argc, char *argv[])
     /*     "Variable : Token name", }; */
     const char *baseName = "Stmt";
     const std::vector<std::string> types = {
+        "If : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch",
         "Block      : std::vector<std::unique_ptr<Stmt>> statements",
         "Expression : std::unique_ptr<Expr> expression",
         "Print      : std::unique_ptr<Expr> expression",

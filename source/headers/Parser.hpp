@@ -12,7 +12,9 @@
  * declaration → varDeclaration | statement ;
  * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
  *
- * statement → printStatement | expressionStatement | block ;
+ * statement → ifStmt | printStmt | expressionStmt | block ;
+ *
+ * ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
  *
  * block → "{" declaration* "}" ;
  *
@@ -82,6 +84,7 @@ class Parser
     std::unique_ptr<Stmt> varDeclaration();
     std::unique_ptr<Stmt> declaration();
     std::unique_ptr<Stmt> statement();
+    std::unique_ptr<Stmt> ifStatement();
     std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Stmt> printStatement();
     std::unique_ptr<Stmt> expressionStatement();

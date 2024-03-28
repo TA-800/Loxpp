@@ -4,22 +4,23 @@
 #include "Token.hpp"
 #include <memory>
 
-class Block;
-
 // Expression evaluates to a value
 class Expression;
 
 // Statement that has a side effect
-class Print;
+class Print; // Side effect is printing to the console
+class If;    // Side effect is conditional branching
+class Block; // Side effect is grouping multiple stmts (into one)
 
 // Statement that defines a variable
 class Var;
 
-// Create visitor interface. Every tree walker that implements StmtVisitor will be able to do something useful with
-// different types of Stmts it wants to parse.
+// Create visitor interface. Every tree walker (interpreter, printer) that implements StmtVisitor will be able to do
+// something useful with different types of Stmts it wants to parse.
 class StmtVisitor
 {
   public:
+    virtual void visitIfStmt(const If &Stmt) = 0;
     virtual void visitBlockStmt(const Block &Stmt) = 0;
     virtual void visitExpressionStmt(const Expression &Stmt) = 0;
     virtual void visitPrintStmt(const Print &Stmt) = 0;
@@ -31,8 +32,25 @@ class Stmt
     virtual ~Stmt() = default;
     virtual void accept(StmtVisitor &visitor) = 0;
 };
+class If : public Stmt
+{
+  public:
+    std::unique_ptr<Expr> condition;
+    std::unique_ptr<Stmt> thenBranch;
+    std::unique_ptr<Stmt> elseBranch;
+
+    If(std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch)
+        : condition(std::move(condition)), thenBranch(std::move(thenBranch)), elseBranch(std::move(elseBranch))
+    {
+    }
+    void accept(StmtVisitor &visitor) override
+    {
+        visitor.visitIfStmt(*this);
+    }
+};
 
 // Block acts a single statement but contains multiple statements
+// NOTE: The generator script does not initalize the vector of statements in the constructor
 class Block : public Stmt
 {
   public:
@@ -53,6 +71,7 @@ class Block : public Stmt
         visitor.visitBlockStmt(*this);
     }
 };
+
 class Expression : public Stmt
 {
   public:

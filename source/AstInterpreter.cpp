@@ -381,6 +381,20 @@ void AstInterpreter::visitExpressionStmt(const Expression &stmt)
     evaluate(stmt.expression);
 };
 
+void AstInterpreter::visitIfStmt(const If &stmt)
+{
+
+    // Evaluate condition to some value
+    evaluate(stmt.condition);
+
+    // If condition is true, execute then branch
+    if (isTruthy(getResult(), getResultType()))
+        execute(stmt.thenBranch);
+    // Else, if there was an else branch, execute it
+    else if (stmt.elseBranch != nullptr)
+        execute(stmt.elseBranch);
+}
+
 void AstInterpreter::visitPrintStmt(const Print &stmt)
 {
     bool successEval = evaluate(stmt.expression);
