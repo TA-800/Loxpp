@@ -12,7 +12,6 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
  * This script will generate the classes for us.
  */
 
-// TODO: Create copy ctors and clone methods for all classes
 int main(int argc, char *argv[])
 {
 

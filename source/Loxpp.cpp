@@ -40,28 +40,41 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
-    std::vector<std::string> lines = {
-        "var a = 1;",
-        "fun sayHi (first, last) { print \"Hi \" + first + \" \" + last; } ",
-        "print a;",
-        "sayHi(\"Hello\", \" World!\");",
-    };
+    /* std::vector<std::string> lines = { */
+    /*     "var a = 1;", */
+    /*     "fun sayHi (first, last) { print \"Hi \" + first + \" \" + last; } ", */
+    /*     "print a;", */
+    /*     "sayHi(\"Hello\", \" World!\");", */
+    /* }; */
 
     // Interactive session
-    /* while (true) {...} */
-    // DEBUGGING purposes
-    for (auto &line : lines)
+    while (true)
     {
 
         std::cout << "> ";
-        std::cout << line << "\n";
+        std::getline(std::cin, line);
+
+        if (line == "exit" || line.empty())
+            break;
 
         run(line);
 
-        // Don't kill user session if error, just reset the flag
         if (hadError)
             hadError = false;
     }
+    // DEBUGGING purposes
+    /* for (auto &line : lines) */
+    /* { */
+
+    /*     std::cout << "> "; */
+    /*     std::cout << line << "\n"; */
+
+    /*     run(line); */
+
+    /*     // Don't kill user session if error, just reset the flag */
+    /*     if (hadError) */
+    /*         hadError = false; */
+    /* } */
 }
 
 // Run the source code

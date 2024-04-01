@@ -31,15 +31,11 @@ std::shared_ptr<LoxCallable> Environment::getCallable(Token name)
 void Environment::defineVar(std::string name, std::shared_ptr<void> value, TokenInfo::Type type)
 {
     values[name] = std::make_pair(value, type);
-    // TODO: Debugging purposes, remove
-    if (value != nullptr)
-        simpleVar = values[name].first;
 }
 
 void Environment::defineFun(std::string name, std::shared_ptr<LoxCallable> &callable)
 {
     callables[name] = callable;
-    simpleFunc = callables[name];
 }
 
 // Key difference: do not create a new var if it doesn't exist

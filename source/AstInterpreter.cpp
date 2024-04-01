@@ -146,29 +146,14 @@ void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_p
 {
     switch (type)
     {
-    case TokenInfo::Type::NUMBER: {
-        /* toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet.get())))); */
-        toSet = toGet;
-        break;
-    }
-    case TokenInfo::Type::STRING: {
-        /* toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet.get())))); */
-        toSet = toGet;
-        break;
-    }
+    case TokenInfo::Type::FUN: // TODO: Class
+    case TokenInfo::Type::NUMBER:
+    case TokenInfo::Type::STRING:
     case TokenInfo::Type::TRUE:
     case TokenInfo::Type::FALSE: {
-        /* toSet = std::shared_ptr<void>(new bool(*(static_cast<bool *>(toGet.get())))); */
         toSet = toGet;
         break;
     }
-
-        // Function or class
-        /* case TokenInfo::Type::FUN: { */
-        /*     toSet = std::shared_ptr<void>(new LoxFunction(*(static_cast<LoxFunction *>(toGet.get())))); */
-        /*     break; */
-        /* } // TODO: Class */
-
     case TokenInfo::Type::NIL: {
         toSet = std::shared_ptr<void>(nullptr);
         break;
@@ -362,7 +347,7 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
                                                              std::to_string(*static_cast<double *>(right.get()))));
             setResult(result, tempResult, type);
         }
-        else if (leftType == TokenInfo::Type::STRING && rightType == TokenInfo::Type::NUMBER)
+        else if (leftType == TokenInfo::Type::NUMBER && rightType == TokenInfo::Type::STRING)
         {
             type = TokenInfo::Type::STRING;
             // Convert left to number
@@ -371,11 +356,8 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
             setResult(result, tempResult, type);
         }
         else
-        {
-            // If none of the above conditions are met, we are attempting to add two heterogeneous types. Throw
-            // error.
             throw RuntimeError(expr.op, "Operands must be two numbers or two strings.");
-        }
+
         break;
     }
 

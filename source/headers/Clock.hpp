@@ -1,6 +1,6 @@
-#include "LoxFunction.hpp"
+#include "LoxCallable.hpp"
 
-class Clock : LoxFunction
+class Clock : LoxCallable
 {
   public:
     int arity() const override

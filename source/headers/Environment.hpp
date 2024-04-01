@@ -23,10 +23,6 @@ class Environment
     // Store callables in a separate hash table (to preserve dynamic information)
     std::unordered_map<std::string, std::shared_ptr<LoxCallable>> callables;
 
-    // debugging purposes
-    std::shared_ptr<LoxCallable> simpleFunc;
-    std::shared_ptr<void> simpleVar;
-
   public:
     // For global environment.
     Environment() : enclosing(nullptr)

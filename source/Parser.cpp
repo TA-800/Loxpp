@@ -55,8 +55,6 @@ bool Parser::match(const std::vector<TokenInfo::Type> &types)
     return false;
 }
 
-// TODO: Ternary grammar rule
-
 // Run tokens with grammar rules to form expressions
 
 // declaration → varDeclaration | statement ;
