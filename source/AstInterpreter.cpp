@@ -142,7 +142,7 @@ TokenInfo::Type AstInterpreter::getResultType()
 }
 
 // Simplest interpretable expression
-void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type)
+void AstInterpreter::setResult(std::shared_ptr<void> &toSet, std::shared_ptr<void> &toGet, TokenInfo::Type type)
 {
     switch (type)
     {
@@ -161,15 +161,11 @@ void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_p
     }
 }
 
-void AstInterpreter::setCallable(std::shared_ptr<LoxCallable> &toGet)
-{
-    callableResult = toGet;
-}
-
 void AstInterpreter::visitLiteralExpr(const Literal &expr)
 {
     type = expr.type;
-    setResult(result, expr.value, type);
+    auto val = expr.value;
+    setResult(result, val, type);
 }
 
 // Grouping expression
@@ -192,14 +188,7 @@ void AstInterpreter::visitVariableExpr(const Variable &expr)
     if (type == TokenInfo::Type::UNINITIALIZED)
         throw RuntimeError(expr.name, "Variable used before being initialized.");
 
-    // If it's a function or class, store it in callableResult
-    if (isCallableType(type))
-    {
-        auto callable = environment->getCallable(expr.name);
-        setCallable(callable);
-    }
-    else
-        setResult(result, value.first, type);
+    setResult(result, value.first, type);
 }
 
 void AstInterpreter::visitAssignExpr(const Assign &expr)
@@ -394,12 +383,14 @@ bool AstInterpreter::isCallableType(TokenInfo::Type type)
 // Call expression
 void AstInterpreter::visitCallExpr(const Call &expr)
 {
-    setInterpretResult(expr.callee);
-    TokenInfo::Type calleeType = getResultType();
+    setInterpretResult(expr.callee);              // will call visitCallExpr to ensure callee is of type Fun or Class
+    TokenInfo::Type calleeType = getResultType(); // Get the type of the callee (function or class)
 
     // Check if callee is of a callable type (function or class)
     if (!isCallableType(calleeType))
         throw RuntimeError(expr.paren, "Can only call functions and classes.");
+
+    auto callable = std::static_pointer_cast<LoxCallable>(getResult());
 
     // Evaluate argument expressions
     std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> arguments;
@@ -409,13 +400,13 @@ void AstInterpreter::visitCallExpr(const Call &expr)
         arguments.push_back({getResult(), getResultType()});
     }
 
-    if (arguments.size() != callableResult->arity())
-        throw RuntimeError(expr.paren, "Expected " + std::to_string(callableResult->arity()) + " arguments but got " +
+    if (arguments.size() != callable->arity())
+        throw RuntimeError(expr.paren, "Expected " + std::to_string(callable->arity()) + " arguments but got " +
                                            std::to_string(arguments.size()) + ".");
 
     // Call the function, its return value will be an expression
     // (e.g. return 1 + 2; will return 3)
-    auto [returnValue, returnType] = callableResult->call(*this, arguments);
+    auto [returnValue, returnType] = callable->call(*this, arguments);
     setResult(result, returnValue, returnType);
 }
 
@@ -517,11 +508,8 @@ void AstInterpreter::visitFunctionStmt(const Function &stmt)
     std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
     std::shared_ptr<LoxCallable> function = std::make_shared<LoxFunction>(funcStmtPtr);
 
-    // Define function in callables hashmap
-    environment->defineFun(stmt.name.getLexeme(), function);
-
     // Also define it in variables hashmap (so visitVariableExpr knows it's a function)
-    environment->defineVar(stmt.name.getLexeme(), nullptr, TokenInfo::Type::FUN);
+    environment->defineVar(stmt.name.getLexeme(), function, TokenInfo::Type::FUN);
 }
 
 void AstInterpreter::visitVarStmt(const Var &stmt)

@@ -16,7 +16,6 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     // Result of the interpretation
     TokenInfo::Type type;         // Can return any type of value. Type of the literal (string, number, etc.)
     std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
-    std::shared_ptr<LoxCallable> callableResult;
 
     bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
     bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
@@ -55,8 +54,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     TokenInfo::Type getResultType();
 
     // Get value from void pointer and set it to shared_ptr
-    void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
-    void setCallable(std::shared_ptr<LoxCallable> &toGet);
+    void setResult(std::shared_ptr<void> &toSet, std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
     void visitBinaryExpr(const Binary &expr) override;
     void visitUnaryExpr(const Unary &expr) override;
