@@ -193,7 +193,7 @@ void AstInterpreter::visitVariableExpr(const Variable &expr)
         throw RuntimeError(expr.name, "Variable used before being initialized.");
 
     // If it's a function or class, store it in callableResult
-    if (type == TokenInfo::Type::FUN || type == TokenInfo::Type::CLASS)
+    if (isCallableType(type))
     {
         auto callable = environment->getCallable(expr.name);
         setCallable(callable);
@@ -386,7 +386,7 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
 }
 
 // Helper method to reduce code mess in visitCallExpr
-bool isCallableType(TokenInfo::Type type)
+bool AstInterpreter::isCallableType(TokenInfo::Type type)
 {
     return type == TokenInfo::Type::FUN || type == TokenInfo::Type::CLASS;
 }
@@ -400,8 +400,6 @@ void AstInterpreter::visitCallExpr(const Call &expr)
     // Check if callee is of a callable type (function or class)
     if (!isCallableType(calleeType))
         throw RuntimeError(expr.paren, "Can only call functions and classes.");
-
-    // Reaching here means that callee is a valid callable type (function or class)
 
     // Evaluate argument expressions
     std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> arguments;
@@ -417,8 +415,8 @@ void AstInterpreter::visitCallExpr(const Call &expr)
 
     // Call the function, its return value will be an expression
     // (e.g. return 1 + 2; will return 3)
-    auto callResult = callableResult->call(*this, arguments);
-    setResult(result, callResult.first, callResult.second);
+    auto [returnValue, returnType] = callableResult->call(*this, arguments);
+    setResult(result, returnValue, returnType);
 }
 
 void AstInterpreter::visitExpressionStmt(const Expression &stmt)

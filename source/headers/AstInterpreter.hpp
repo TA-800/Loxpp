@@ -21,6 +21,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
     bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
                  TokenInfo::Type rightType);
+    bool isCallableType(TokenInfo::Type type);
 
     // Runtime error checkers for binary and unary operations
     void checkNumberOperand(const Token &op, TokenInfo::Type rightType);
