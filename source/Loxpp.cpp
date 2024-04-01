@@ -74,18 +74,11 @@ void Loxpp::run(const std::string &source)
     Parser parser(tokens);
     std::vector<std::unique_ptr<Stmt>> statements = parser.parse();
 
-    // If there was an error, don't run the interpreter and ensure memory created by scanner for tokens (literals) is
-    // freed
+    // If there was an error, don't run the interpreter
     if (hadError)
-    {
-        scanner.freeTokens();
         return;
-    }
 
     interpreter.setInterpretResult(statements);
-
-    // Free memory (to avoid memory leaks because we are using new with void *)
-    /* scanner.freeTokens(); */
 }
 
 // Error handling

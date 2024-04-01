@@ -2,6 +2,7 @@
 #define TOKEN_HPP
 
 #include "TokenInfo.hpp"
+#include <memory>
 #include <string>
 
 class Token
@@ -12,7 +13,7 @@ class Token
     const std::string lexeme;
     // The value held by the token. Keywords do not have a literal value.
     // The only way to dereference a void pointer is to cast it to another type first.
-    void *literal;
+    std::shared_ptr<void> literal;
 
     // The line number where the token is present.
     const int line;
@@ -26,7 +27,7 @@ class Token
      */
 
   public:
-    Token(TokenInfo::Type type, const std::string &lexeme, void *literal, int line)
+    Token(TokenInfo::Type type, const std::string &lexeme, std::shared_ptr<void> &literal, int line)
         : type(type), lexeme(lexeme), literal(literal), line(line)
     {
     }
@@ -44,7 +45,7 @@ class Token
     {
         return lexeme;
     }
-    const void *getLiteral() const
+    std::shared_ptr<void> getLiteral() const
     {
         return literal;
     }
@@ -52,8 +53,6 @@ class Token
     {
         return line;
     }
-
-    void freeLiteral();
 };
 
 #endif // !TOKEN_HPP

@@ -18,7 +18,8 @@ std::vector<Token> &Scanner::scanTokens()
         scanToken();
     }
 
-    tokens.push_back(Token(TokenInfo::Type::END_OF_FILE, "", nullptr, line));
+    auto nilptr = std::shared_ptr<void>();
+    tokens.push_back(Token(TokenInfo::Type::END_OF_FILE, "", nilptr, line));
 
     return tokens;
 }
@@ -146,12 +147,12 @@ char Scanner::advance()
 
 void Scanner::addToken(TokenInfo::Type type)
 {
-    addToken(type, nullptr);
+    auto nilptr = std::shared_ptr<void>();
+    addToken(type, nilptr);
 }
 
-void Scanner::addToken(TokenInfo::Type type, void *literal)
+void Scanner::addToken(TokenInfo::Type type, std::shared_ptr<void> &literal)
 {
-    // substr ( start, len )
     std::string text = source.substr(start, current - start);
     tokens.push_back(Token(type, text, literal, line));
 }
@@ -212,11 +213,8 @@ void Scanner::string()
     // Remove surrounding quotes to add purely the string value to tokens
 
     // Create string in memory
-    // substr ( start, len )
     std::string str = source.substr(start + 1, current - (start + 1) - 1);
-    void *string = new std::string(str);
-    /* std::cout << "Created memory for string" */
-    /*           << "\n"; */
+    std::shared_ptr<void> string = std::make_shared<std::string>(str);
     addToken(TokenInfo::Type::STRING, string);
 }
 
@@ -239,17 +237,8 @@ void Scanner::number()
     }
 
     // Parse string into double and store in tokens
-    // Create pointer to a double that has value of string converted to double
-    void *number = new double(std::stod(source.substr(start, current)));
+    std::shared_ptr<void> number = std::make_shared<double>(std::stod(source.substr(start, current)));
     addToken(TokenInfo::Type::NUMBER, number);
-}
-
-void Scanner::freeTokens()
-{
-    for (Token &token : tokens)
-    {
-        token.freeLiteral();
-    }
 }
 
 void Scanner::multiLineComment()

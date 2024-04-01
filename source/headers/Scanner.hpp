@@ -46,7 +46,7 @@ class Scanner
      * Add token to vector of tokens. To be used when token has a literal value.
      * For output.
      */
-    void addToken(TokenInfo::Type type, void *literal);
+    void addToken(TokenInfo::Type type, std::shared_ptr<void> &literal);
 
     /*
      * Check if next char matches expected char.
@@ -97,11 +97,6 @@ class Scanner
      * Scan source code char-by-char and return a vector of tokens.
      */
     std::vector<Token> &scanTokens();
-
-    /*
-     * Free memory allocated for tokens.
-     */
-    void freeTokens();
 };
 
 #endif // !SCANNER_HPP

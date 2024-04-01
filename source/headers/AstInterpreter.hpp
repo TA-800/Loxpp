@@ -53,7 +53,6 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     TokenInfo::Type getResultType();
 
     // Get value from void pointer and set it to shared_ptr
-    void setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type);
     void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
     void setCallable(std::shared_ptr<LoxCallable> &toGet);
 

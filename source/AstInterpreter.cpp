@@ -142,55 +142,24 @@ TokenInfo::Type AstInterpreter::getResultType()
 }
 
 // Simplest interpretable expression
-// For a literal expression, the value is the literal itself
-void AstInterpreter::setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type)
-{
-    switch (type)
-    {
-    case TokenInfo::Type::NUMBER: {
-        toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet))));
-        break;
-    }
-    case TokenInfo::Type::STRING: {
-        toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet))));
-        break;
-    }
-    case TokenInfo::Type::TRUE: {
-        toSet = std::shared_ptr<void>(new bool(true));
-        break;
-    }
-    case TokenInfo::Type::FALSE: {
-        toSet = std::shared_ptr<void>(new bool(false));
-        break;
-    }
-        // Function or class
-        /* case TokenInfo::Type::FUN: { */
-        /*     toSet = std::shared_ptr<void>(new LoxFunction(*(static_cast<LoxFunction *>(toGet)))); */
-        /*     break; */
-        /* } // TODO: Class */
-
-    case TokenInfo::Type::NIL: {
-        toSet = std::shared_ptr<void>(nullptr);
-        break;
-    }
-    }
-}
-
 void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type)
 {
     switch (type)
     {
     case TokenInfo::Type::NUMBER: {
-        toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet.get()))));
+        /* toSet = std::shared_ptr<void>(new double(*(static_cast<double *>(toGet.get())))); */
+        toSet = toGet;
         break;
     }
     case TokenInfo::Type::STRING: {
-        toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet.get()))));
+        /* toSet = std::shared_ptr<void>(new std::string(*(static_cast<std::string *>(toGet.get())))); */
+        toSet = toGet;
         break;
     }
     case TokenInfo::Type::TRUE:
     case TokenInfo::Type::FALSE: {
-        toSet = std::shared_ptr<void>(new bool(*(static_cast<bool *>(toGet.get()))));
+        /* toSet = std::shared_ptr<void>(new bool(*(static_cast<bool *>(toGet.get())))); */
+        toSet = toGet;
         break;
     }
 
@@ -565,10 +534,6 @@ void AstInterpreter::visitFunctionStmt(const Function &stmt)
 {
 
     // Copy stmt to a new var ptr.
-    // stmt.clone( ) will return unique_ptr<Stmt> which can safely be downcasted to Function
-    // because return statement is make_unique<Function> ( ... )
-    // Do stmt.clone( ) and downcast to Function and pass to LoxFunction constructor
-
     std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
     std::shared_ptr<LoxCallable> function = std::make_shared<LoxFunction>(funcStmtPtr);
 

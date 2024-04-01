@@ -45,14 +45,14 @@ void AstPrinter::visitLiteralExpr(const Literal &expr)
     // If the literal is a string
     else if (expr.type == TokenInfo::Type::STRING)
     {
-        result += *static_cast<std::string *>(expr.value);
+        result += *std::static_pointer_cast<std::string>(expr.value);
     }
 
     // If the literal is a number
     else if (expr.type == TokenInfo::Type::NUMBER)
     {
         // Cast to int then convert to string to print
-        result += std::to_string(*static_cast<double *>(expr.value));
+        result += std::to_string(*std::static_pointer_cast<int>(expr.value));
     }
 }
 

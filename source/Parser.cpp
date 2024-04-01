@@ -265,7 +265,8 @@ std::unique_ptr<Stmt> Parser::forStatement()
     if (condition == nullptr)
     {
         // If there is no condition, make it true (infinite loop)
-        condition = std::make_unique<Literal>(nullptr, TokenInfo::Type::TRUE);
+        auto nilptr = std::shared_ptr<void>();
+        condition = std::make_unique<Literal>(nilptr, TokenInfo::Type::TRUE);
     }
 
     // Convert whileBody to a block statement
@@ -515,14 +516,26 @@ std::unique_ptr<Expr> Parser::finishCall(std::unique_ptr<Expr> &callee)
 std::unique_ptr<Expr> Parser::primary()
 {
     if (match({TokenInfo::Type::FALSE}))
-        return std::make_unique<Literal>(nullptr, TokenInfo::Type::FALSE);
+    {
+        auto nilptr = std::shared_ptr<void>();
+        return std::make_unique<Literal>(nilptr, TokenInfo::Type::FALSE);
+    }
     if (match({TokenInfo::Type::TRUE}))
-        return std::make_unique<Literal>(nullptr, TokenInfo::Type::TRUE);
+    {
+        auto nilptr = std::shared_ptr<void>();
+        return std::make_unique<Literal>(nilptr, TokenInfo::Type::TRUE);
+    }
     if (match({TokenInfo::Type::NIL}))
-        return std::make_unique<Literal>(nullptr, TokenInfo::Type::NIL);
+    {
+        auto nilptr = std::shared_ptr<void>();
+        return std::make_unique<Literal>(nilptr, TokenInfo::Type::NIL);
+    }
 
     if (match({TokenInfo::Type::NUMBER, TokenInfo::Type::STRING}))
-        return std::make_unique<Literal>((void *)previous().getLiteral(), previous().getType());
+    {
+        auto prevLiteral = previous().getLiteral();
+        return std::make_unique<Literal>(prevLiteral, previous().getType());
+    }
 
     // If we find an identifier, then it is a variable
     if (match({TokenInfo::Type::IDENTIFIER}))

@@ -151,9 +151,9 @@ class Literal : public Expr
 {
   public:
     TokenInfo::Type type;
-    void *value;
+    std::shared_ptr<void> value;
 
-    Literal(void *value, TokenInfo::Type type) : type(type), value(value)
+    Literal(std::shared_ptr<void> &value, TokenInfo::Type type) : type(type), value(value)
     {
     }
     void accept(ExprVisitor &visitor) override
@@ -163,6 +163,7 @@ class Literal : public Expr
 
     std::unique_ptr<Expr> clone() const override
     {
+        auto value = this->value;
         return std::make_unique<Literal>(value, type);
     }
 };
