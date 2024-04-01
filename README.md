@@ -1,6 +1,6 @@
 # Lox++
 
-This is a C++14 implementation of the Lox interpreter ( from the book "Crafting Interpreters" [ Java ] ).
+This is a personal C++14 implementation of the Lox interpreter ( from the book "Crafting Interpreters" [ Java ] ).
 
 ## Features
 

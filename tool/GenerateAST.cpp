@@ -12,13 +12,14 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
  * This script will generate the classes for us.
  */
 
-// TODO: Change to references in constructor params list
+// TODO: Create copy ctors and clone methods for all classes
 int main(int argc, char *argv[])
 {
 
     std::string outputDir = "source/headers";
     /* const char *baseName = "Expr"; */
     /* const std::vector<std::string> types = { */
+    /*     "Call     : std::unique_ptr<Expr> callee, Token paren, std::vector<std::unique_ptr<Expr>> arguments", */
     /*     "Assign   : Token name, std::unique_ptr<Expr> value", */
     /*     "Binary   : std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right", */
     /*     "Grouping : std::unique_ptr<Expr> expression", */
@@ -30,11 +31,14 @@ int main(int argc, char *argv[])
     const char *baseName = "Stmt";
     const std::vector<std::string> types = {
         "If : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> thenBranch, std::unique_ptr<Stmt> elseBranch",
+
         "While : std::unique_ptr<Expr> condition, std::unique_ptr<Stmt> body",
         "Block      : std::vector<std::unique_ptr<Stmt>> statements",
+        "Break",
         "Expression : std::unique_ptr<Expr> expression",
         "Print      : std::unique_ptr<Expr> expression",
         "Var        : Token name, std::unique_ptr<Expr> initializer",
+        "Function   : Token name, std::vector<Token> params, std::vector<std::unique_ptr<Stmt>> body",
     };
 
     defineAst(outputDir, baseName, types);
@@ -160,37 +164,35 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
                << "\n";
     headerFile << "public:"
                << "\n";
-    std::pair<bool, std::string> hasVectorOfUnqPtr = {false, ""};
 
     // Define the fields
     // E.g. Expr left; Token op; Expr right;
     for (const auto &field : fields)
     {
-        headerFile << field.first << " " << field.second << ";"
+        // NOTE: Structured bindings
+        auto &[type, name] = field;
+        headerFile << type << " " << name << ";"
                    << "\n";
-        constructorParams += field.first + " " + field.second;
 
         // If type contains vector of unique_ptr then manually construct the vector
-        if (field.first.find("vector<std::unique_ptr") != std::string::npos)
+        if (type.find("unique_ptr") != std::string::npos)
         {
-            hasVectorOfUnqPtr.first = true;          // Set flag to true
-            hasVectorOfUnqPtr.second = field.second; // Set name to vector name
+            // E.g. Binary(std::unique_ptr<Expr> &left, Token op, std::unique_ptr<Expr> &right);
+            constructorParams += type + " &" + name;
+            initializationParams += name + "(std::move(" + name + "))";
         }
-
-        // If type contains "unique_ptr" then use move for initialization, else copy
-        else if (field.first.find("unique_ptr") != std::string::npos)
-            initializationParams += field.second + "(std::move(" + field.second + "))";
         else
         {
+            constructorParams += type + " " + name;
             // If raw ptr then don't do *ptr( *ptr ), just ptr(ptr)
             // Example: void *literal; -> literal(literal)
-            if (field.first.find("*") != std::string::npos)
+            if (type.find("*") != std::string::npos)
             {
-                std::string temp = field.second.substr(1);
+                std::string temp = name.substr(1);
                 initializationParams += temp + "(" + temp + ")";
             }
             else
-                initializationParams += field.second + "(" + field.second + ")";
+                initializationParams += name + "(" + name + ")";
         }
 
         // Add commas if not the last field
@@ -204,16 +206,7 @@ void defineType(std::ofstream &headerFile, const char *baseName, const std::stri
 
     // E.g. Binary(std::unique_ptr<Expr> left, Token op, std::unique_ptr<Expr> right) :
     // left(std::move(left)), op(op), right(std::move(right)) {}
-    headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {"
-               << "\n";
-    if (hasVectorOfUnqPtr.first)
-    {
-        headerFile << "for (auto &stmt : " << hasVectorOfUnqPtr.second << ")"
-                   << "\n";
-        headerFile << "{ this->" << hasVectorOfUnqPtr.second << ".push_back(std::move(stmt)); }"
-                   << "\n";
-    }
-    headerFile << "}"
+    headerFile << className << "(" << constructorParams << ") : " << initializationParams << " {}"
                << "\n";
 
     // void accept(Visitor &visitor) override { visitor.visit[className][baseName](*this); }

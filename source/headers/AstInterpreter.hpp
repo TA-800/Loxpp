@@ -9,11 +9,13 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
 {
 
     // Global environment for the interpreter
-    std::shared_ptr<Environment> environment = std::make_shared<Environment>();
+    std::shared_ptr<Environment> globals = std::make_shared<Environment>();
+    std::shared_ptr<Environment> environment = globals;
 
     // Result of the interpretation
-    std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
     TokenInfo::Type type;         // Can return any type of value. Type of the literal (string, number, etc.)
+    std::shared_ptr<void> result; // Value ("Hello", 2, etc.)
+    std::shared_ptr<LoxCallable> callableResult;
 
     bool isTruthy(const std::shared_ptr<void> &value, TokenInfo::Type type);
     bool isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right, TokenInfo::Type leftType,
@@ -28,6 +30,15 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
      * Interpreter will go through the AST of statements and expressions and set the result var equal to a computed
      * value from the statements or expressions. Use getResult() to get the result of the interpretation.
      */
+
+    AstInterpreter()
+    {
+        // Define the clock function in the global environment
+        // TODO: Avoid circular dependency
+
+        /* globals->define("clock", std::make_shared<Clock>(), TokenInfo::Type::FUN); */
+    }
+
     void setInterpretResult(const std::unique_ptr<Expr> &expr);                    // For expressions
     void setInterpretResult(const std::vector<std::unique_ptr<Stmt>> &statements); // For statements
     void execute(const std::unique_ptr<Stmt> &stmt);                               // Execute statements line by line
@@ -44,6 +55,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     // Get value from void pointer and set it to shared_ptr
     void setResult(std::shared_ptr<void> &toSet, void *toGet, TokenInfo::Type type);
     void setResult(std::shared_ptr<void> &toSet, const std::shared_ptr<void> &toGet, TokenInfo::Type type);
+    void setCallable(std::shared_ptr<LoxCallable> &toGet);
 
     void visitBinaryExpr(const Binary &expr) override;
     void visitUnaryExpr(const Unary &expr) override;
@@ -53,17 +65,23 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
         override; // Simply returns the value of the variable, e.g. var x = 2 then x would return 2
     void visitAssignExpr(const Assign &expr) override;
     void visitLogicalExpr(const Logical &expr) override;
+    void visitCallExpr(const Call &expr) override;
 
     void visitExpressionStmt(const Expression &stmt) override;
     void visitIfStmt(const If &stmt) override;
     void visitWhileStmt(const While &stmt) override;
     void visitBreakStmt(const Break &stmt) override;
+    // Break reference: https://github.com/munificent/craftinginterpreters/issues/119
     void visitPrintStmt(const Print &stmt) override;
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block &stmt) override;
-    // Break reference: https://github.com/munificent/craftinginterpreters/issues/119
+    void visitFunctionStmt(const Function &stmt) override;
 
     std::string stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type);
+    std::shared_ptr<Environment> &getGlobals()
+    {
+        return globals;
+    }
 };
 
-#endif // !ASTINTERPRETER_HPP
+#endif // ASTINTERPRETER_HPP

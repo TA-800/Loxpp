@@ -30,8 +30,8 @@ std::string TokenInfo::getTypeString(Type type)
 
 TokenInfo::Type TokenInfo::getKeywordOrIdentifier(std::string &type)
 {
-    // From "and" to "uninitialized" are keywords.
-    for (int i = 22; i < 40; i++)
+    // From "and" to "break" are user-usable keywords.
+    for (int i = 22; i < 39; i++)
     {
         // Lowercase the string from TypeStrings vector.
         std::string lower = TypeStrings[i];

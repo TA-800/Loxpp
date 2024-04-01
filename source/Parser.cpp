@@ -68,6 +68,9 @@ std::unique_ptr<Stmt> Parser::declaration()
         if (match({TokenInfo::Type::VAR}))
             return varDeclaration();
 
+        if (match({TokenInfo::Type::FUN}))
+            return function("function");
+
         // Else some other kind of statement (print, expression, etc.)
         return statement();
     }
@@ -79,6 +82,43 @@ std::unique_ptr<Stmt> Parser::declaration()
 
         return nullptr;
     }
+}
+
+// function → "fun" IDENTIFIER "(" parameters? ")" block ;
+// parameters → IDENTIFIER ( "," IDENTIFIER )* ;
+std::unique_ptr<Function> Parser::function(const std::string &kind)
+{
+    // Get name of function
+    Token name = consume(TokenInfo::Type::IDENTIFIER, "Expect " + kind + " name.");
+
+    // Parse param list
+    consume(TokenInfo::Type::LEFT_PAREN, "Expect '(' after " + kind + " name.");
+
+    std::vector<Token> params;
+
+    if (!check(TokenInfo::Type::RIGHT_PAREN))
+    {
+        do // Parse param identifiers one by one and add to list
+        {
+            if (params.size() >= 255)
+            {
+                Loxpp::error(peek(), "Cannot have more than 255 parameters.");
+            }
+
+            params.push_back(consume(TokenInfo::Type::IDENTIFIER, "Expect parameter name."));
+        } while (match({TokenInfo::Type::COMMA})); // as long as there are commas
+    }
+
+    consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after parameters.");
+
+    // Parse function body (block code)
+    consume(TokenInfo::Type::LEFT_BRACE, "Expect '{' before " + kind + " body.");
+
+    std::vector<std::unique_ptr<Stmt>> body = block();
+
+    // After we get block, we now have function (name) with params and body.
+    // Create function node for the AST
+    return std::make_unique<Function>(name, params, body);
 }
 
 // varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
@@ -421,7 +461,7 @@ std::unique_ptr<Expr> Parser::factor()
     return expr;
 }
 
-// unary → ( "!" | "-" ) unary | primary ;
+// unary → ( "!" | "-" ) unary | call ;
 std::unique_ptr<Expr> Parser::unary()
 {
     if (match({TokenInfo::Type::BANG, TokenInfo::Type::MINUS}))
@@ -431,9 +471,44 @@ std::unique_ptr<Expr> Parser::unary()
         return std::make_unique<Unary>(op, right);
     }
     else
+        return call();
+}
+
+// call → primary ( "(" arguments? ")" )* ;
+std::unique_ptr<Expr> Parser::call()
+{
+    std::unique_ptr<Expr> expr = primary();
+
+    while (true)
     {
-        return primary();
+        if (match({TokenInfo::Type::LEFT_PAREN}))
+        {
+            expr = finishCall(expr);
+        }
+        else
+            break;
     }
+
+    return expr;
+}
+
+std::unique_ptr<Expr> Parser::finishCall(std::unique_ptr<Expr> &callee)
+{
+    std::vector<std::unique_ptr<Expr>> arguments;
+    if (!check(TokenInfo::Type::RIGHT_PAREN))
+    {
+        do
+        {
+            if (arguments.size() >= 255)
+                Loxpp::error(peek(), "Cannot have more than 255 arguments.");
+            arguments.push_back(expression());
+
+        } while (match({TokenInfo::Type::COMMA}));
+    }
+
+    Token paren = consume(TokenInfo::Type::RIGHT_PAREN, "Expect ')' after arguments.");
+
+    return std::make_unique<Call>(callee, paren, arguments);
 }
 
 // primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;

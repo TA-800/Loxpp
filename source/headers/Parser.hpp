@@ -9,8 +9,12 @@
  *
  * program → declaration* EOF ;
  *
- * declaration → varDeclaration | statement ;
- * varDeclaration → "var" IDENTIFIER ( "=" expression )? ";" ;
+ * declaration → varDecl | funDecl | statement ;
+ * varDecl → "var" IDENTIFIER ( "=" expression )? ";" ;
+ *
+ * funDecl → "fun" function ;
+ * function → IDENTIFIER "(" parameters? ")" block ;
+ * parameters → IDENTIFIER ( "," IDENTIFIER )* ;
  *
  * statement → ifStmt | forStmt | whileStmt | breakStmt | printStmt | exprStmt | block ;
  *
@@ -31,7 +35,9 @@
  * comparison → term ( ( ">" | ">=" | "<" | "<=" ) term )* ;
  * term → factor ( ( "-" | "+" ) factor )* ;
  * factor → unary ( ( "/" | "*" ) unary )* ;
- * unary → ( "!" | "-" ) unary | primary ;
+ * unary → ( "!" | "-" ) unary | call ;
+ * call → primary ( "(" arguments? ")" )* ;
+ * arguments → expression ( "," expression )* ;
  * primary → NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" | IDENTIFIER;
  *
  */
@@ -65,6 +71,8 @@ class Parser
 
     Token consume(TokenInfo::Type type, const std::string &message);
 
+    std::unique_ptr<Expr> finishCall(std::unique_ptr<Expr> &callee);
+
     /*
      * Expression parsing.
      * Consume tokens to form AST nodes of expressions.
@@ -79,6 +87,7 @@ class Parser
     std::unique_ptr<Expr> term();
     std::unique_ptr<Expr> factor();
     std::unique_ptr<Expr> unary();
+    std::unique_ptr<Expr> call();
     std::unique_ptr<Expr> primary();
 
     // Syncronize the parser after an error
@@ -89,6 +98,7 @@ class Parser
      * Consume tokens to form AST nodes of statements.
      */
 
+    std::unique_ptr<Function> function(const std::string &kind);
     std::unique_ptr<Stmt> varDeclaration();
     std::unique_ptr<Stmt> declaration();
     std::unique_ptr<Stmt> statement();

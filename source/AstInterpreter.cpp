@@ -1,10 +1,13 @@
 #include "headers/AstInterpreter.hpp"
 #include "headers/BreakError.hpp"
 #include "headers/Environment.hpp"
+#include "headers/LoxCallable.hpp"
+#include "headers/LoxFunction.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/RuntimeError.hpp"
 #include <iostream>
 #include <memory>
+#include <utility>
 
 bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
                              TokenInfo::Type leftType, TokenInfo::Type rightType)
@@ -160,6 +163,12 @@ void AstInterpreter::setResult(std::shared_ptr<void> &toSet, void *toGet, TokenI
         toSet = std::shared_ptr<void>(new bool(false));
         break;
     }
+        // Function or class
+        /* case TokenInfo::Type::FUN: { */
+        /*     toSet = std::shared_ptr<void>(new LoxFunction(*(static_cast<LoxFunction *>(toGet)))); */
+        /*     break; */
+        /* } // TODO: Class */
+
     case TokenInfo::Type::NIL: {
         toSet = std::shared_ptr<void>(nullptr);
         break;
@@ -184,7 +193,23 @@ void AstInterpreter::setResult(std::shared_ptr<void> &toSet, const std::shared_p
         toSet = std::shared_ptr<void>(new bool(*(static_cast<bool *>(toGet.get()))));
         break;
     }
+
+        // Function or class
+        /* case TokenInfo::Type::FUN: { */
+        /*     toSet = std::shared_ptr<void>(new LoxFunction(*(static_cast<LoxFunction *>(toGet.get())))); */
+        /*     break; */
+        /* } // TODO: Class */
+
+    case TokenInfo::Type::NIL: {
+        toSet = std::shared_ptr<void>(nullptr);
+        break;
     }
+    }
+}
+
+void AstInterpreter::setCallable(std::shared_ptr<LoxCallable> &toGet)
+{
+    callableResult = toGet;
 }
 
 void AstInterpreter::visitLiteralExpr(const Literal &expr)
@@ -207,12 +232,20 @@ void AstInterpreter::visitVariableExpr(const Variable &expr)
     std::pair<std::shared_ptr<void>, TokenInfo::Type> value =
         environment->get(expr.name); // Can throw error if not defined
 
-    if (value.second == TokenInfo::Type::UNINITIALIZED)
+    // Set the result to the value of the variable
+    type = value.second;
+
+    if (type == TokenInfo::Type::UNINITIALIZED)
         throw RuntimeError(expr.name, "Variable used before being initialized.");
 
-    // Set the result to the value of the variable
-    setResult(result, value.first, value.second);
-    type = value.second;
+    // If it's a function or class, store it in callableResult
+    if (type == TokenInfo::Type::FUN || type == TokenInfo::Type::CLASS)
+    {
+        auto callable = environment->getCallable(expr.name);
+        setCallable(callable);
+    }
+    else
+        setResult(result, value.first, type);
 }
 
 void AstInterpreter::visitAssignExpr(const Assign &expr)
@@ -401,6 +434,42 @@ void AstInterpreter::visitBinaryExpr(const Binary &expr)
     return;
 }
 
+// Helper method to reduce code mess in visitCallExpr
+bool isCallableType(TokenInfo::Type type)
+{
+    return type == TokenInfo::Type::FUN || type == TokenInfo::Type::CLASS;
+}
+
+// Call expression
+void AstInterpreter::visitCallExpr(const Call &expr)
+{
+    setInterpretResult(expr.callee);
+    TokenInfo::Type calleeType = getResultType();
+
+    // Check if callee is of a callable type (function or class)
+    if (!isCallableType(calleeType))
+        throw RuntimeError(expr.paren, "Can only call functions and classes.");
+
+    // Reaching here means that callee is a valid callable type (function or class)
+
+    // Evaluate argument expressions
+    std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> arguments;
+    for (const auto &arg : expr.arguments)
+    {
+        setInterpretResult(arg);
+        arguments.push_back({getResult(), getResultType()});
+    }
+
+    if (arguments.size() != callableResult->arity())
+        throw RuntimeError(expr.paren, "Expected " + std::to_string(callableResult->arity()) + " arguments but got " +
+                                           std::to_string(arguments.size()) + ".");
+
+    // Call the function, its return value will be an expression
+    // (e.g. return 1 + 2; will return 3)
+    auto callResult = callableResult->call(*this, arguments);
+    setResult(result, callResult.first, callResult.second);
+}
+
 void AstInterpreter::visitExpressionStmt(const Expression &stmt)
 {
     evaluate(stmt.expression);
@@ -491,6 +560,25 @@ void AstInterpreter::visitBlockStmt(const Block &stmt)
     executeBlock(stmt.statements, localEnv);
 }
 
+// Function declaration (not call)
+void AstInterpreter::visitFunctionStmt(const Function &stmt)
+{
+
+    // Copy stmt to a new var ptr.
+    // stmt.clone( ) will return unique_ptr<Stmt> which can safely be downcasted to Function
+    // because return statement is make_unique<Function> ( ... )
+    // Do stmt.clone( ) and downcast to Function and pass to LoxFunction constructor
+
+    std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
+    std::shared_ptr<LoxCallable> function = std::make_shared<LoxFunction>(funcStmtPtr);
+
+    // Define function in callables hashmap
+    environment->defineFun(stmt.name.getLexeme(), function);
+
+    // Also define it in variables hashmap (so visitVariableExpr knows it's a function)
+    environment->defineVar(stmt.name.getLexeme(), nullptr, TokenInfo::Type::FUN);
+}
+
 void AstInterpreter::visitVarStmt(const Var &stmt)
 {
     std::shared_ptr<void> value = nullptr;
@@ -505,13 +593,11 @@ void AstInterpreter::visitVarStmt(const Var &stmt)
         valtype = getResultType();
     }
 
-    environment->define(stmt.name.getLexeme(), value, valtype);
+    environment->defineVar(stmt.name.getLexeme(), value, valtype);
 }
 
 std::string AstInterpreter::stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type)
 {
-    if (result == nullptr)
-        return "nil";
 
     if (type == TokenInfo::Type::NUMBER)
         return std::to_string(*static_cast<double *>(result.get()));

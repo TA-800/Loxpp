@@ -5,13 +5,13 @@ int main(int argc, char *argv[])
 {
 
     // TODO: Fix the AST generation script
+    // TODO: Understand string literal lifetimes (esp. from local return values)
 
     // Check if we are running a script or an interactive session
     if (argc > 2)
     {
         std::cout << "Usage: loxpp [script]"
                   << "\n";
-        /* exit(64); */
         return 64;
     }
     // Script

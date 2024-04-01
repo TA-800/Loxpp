@@ -40,29 +40,27 @@ int Loxpp::runFile(const std::string &path)
 void Loxpp::runPrompt()
 {
     std::string line;
-    /* std::vector<std::string> lines = { */
-    /*     "var a = 5;", "{", "  var a = 6;", "  print a;", "}", "print a;", */
-    /* }; */
+    std::vector<std::string> lines = {
+        "var a = 1;",
+        "fun sayHi (first, last) { print \"Hi \" + first + \" \" + last; } ",
+        "print a;",
+        "sayHi(\"Hello\", \" World!\");",
+    };
 
-    int counter = 0;
-    while (true)
+    // Interactive session
+    /* while (true) {...} */
+    // DEBUGGING purposes
+    for (auto &line : lines)
     {
 
         std::cout << "> ";
-        std::getline(std::cin, line);
-        /* line = lines[counter++]; */
-        /* std::cout << line << "\n"; */
-        if (line.empty())
-            break;
+        std::cout << line << "\n";
 
         run(line);
 
         // Don't kill user session if error, just reset the flag
         if (hadError)
             hadError = false;
-
-        /* if (counter == lines.size()) */
-        /*     break; */
     }
 }
 
@@ -84,13 +82,10 @@ void Loxpp::run(const std::string &source)
         return;
     }
 
-    // Use AST Interpreter to interpret the tokens
-    /* AstPrinter printer; printer.setPrintResult(statements); std::cout << printer.get() << "\n"; */
-
     interpreter.setInterpretResult(statements);
 
     // Free memory (to avoid memory leaks because we are using new with void *)
-    scanner.freeTokens();
+    /* scanner.freeTokens(); */
 }
 
 // Error handling

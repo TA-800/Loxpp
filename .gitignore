@@ -2,3 +2,6 @@ build
 
 # Ignore .exe files
 *.exe
+.vscode
+.vs
+quicknotes.txt
