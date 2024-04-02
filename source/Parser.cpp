@@ -144,6 +144,10 @@ std::unique_ptr<Stmt> Parser::statement()
     if (match({TokenInfo::Type::IF}))
         return ifStatement();
 
+    // Check if the current token is a return statement
+    if (match({TokenInfo::Type::RETURN}))
+        return returnStatement();
+
     // Check if the current token is a print statement
     if (match({TokenInfo::Type::PRINT}))
         return printStatement();
@@ -308,6 +312,21 @@ std::unique_ptr<Stmt> Parser::breakStatement()
         Loxpp::error(previous(), "Cannot use 'break' outside of a loop.");
 
     return std::make_unique<Break>();
+}
+
+// returnStmt → "return" expression? ";" ;
+std::unique_ptr<Stmt> Parser::returnStatement()
+{
+    Token keyword = previous();
+    std::unique_ptr<Expr> value = nullptr;
+
+    // If there is a value to return
+    if (!check(TokenInfo::Type::SEMICOLON))
+        value = expression();
+
+    consume(TokenInfo::Type::SEMICOLON, "Expect ';' after return value.");
+
+    return std::make_unique<Return>(keyword, value);
 }
 
 // printStatement → "print" expression ";" ;

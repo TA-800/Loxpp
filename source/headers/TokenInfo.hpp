@@ -1,3 +1,6 @@
+#ifndef TOKENINFO_HPP
+#define TOKENINFO_HPP
+
 #include <string>
 #include <vector>
 
@@ -68,3 +71,5 @@ class TokenInfo
 
     static TokenInfo::Type getKeywordOrIdentifier(std::string &text);
 };
+
+#endif // TOKENINFO_HPP

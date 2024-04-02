@@ -11,9 +11,10 @@
  */
 class LoxFunction : public LoxCallable
 {
-    std::unique_ptr<Function> declaration;
 
   public:
+    // clonable
+    std::unique_ptr<Function> declaration;
     LoxFunction(std::unique_ptr<Function> &declaration) : declaration(std::move(declaration))
     {
     }

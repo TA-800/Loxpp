@@ -16,13 +16,14 @@
  * function → IDENTIFIER "(" parameters? ")" block ;
  * parameters → IDENTIFIER ( "," IDENTIFIER )* ;
  *
- * statement → ifStmt | forStmt | whileStmt | breakStmt | printStmt | exprStmt | block ;
+ * statement → ifStmt | forStmt | whileStmt | breakStmt | returnStmt | printStmt | exprStmt | block ;
  *
  * ifStmt → "if" "(" expression ")" statement ( "else" statement )? ;
  *
  * forStmt → "for" "(" ( varDecl | exprStmt | ";" ) expression? ";" expression? ")" statement ;
  * whileStmt → "while" "(" expression ")" statement ;"
  * breakStmt → "break" ";"
+ * returnStmt → "return" expression? ";"
  *
  * exprStmt → expression ";" ;
  *
@@ -106,6 +107,7 @@ class Parser
     std::unique_ptr<Stmt> forStatement();
     std::unique_ptr<Stmt> whileStatement();
     std::unique_ptr<Stmt> breakStatement();
+    std::unique_ptr<Stmt> returnStatement();
     std::vector<std::unique_ptr<Stmt>> block();
     std::unique_ptr<Stmt> printStatement();
     std::unique_ptr<Stmt> expressionStatement();

@@ -13,6 +13,7 @@ class Expression;
 class Print;
 class Var;
 class Function;
+class Return;
 
 class StmtVisitor
 
@@ -26,7 +27,9 @@ class StmtVisitor
     virtual void visitPrintStmt(const Print &Stmt) = 0;
     virtual void visitVarStmt(const Var &Stmt) = 0;
     virtual void visitFunctionStmt(const Function &Stmt) = 0;
+    virtual void visitReturnStmt(const Return &Stmt) = 0;
 };
+
 class Stmt
 {
   public:
@@ -34,12 +37,38 @@ class Stmt
     virtual void accept(StmtVisitor &visitor) = 0;
     virtual std::unique_ptr<Stmt> clone() const = 0;
 };
+
+class Return : public Stmt
+{
+  public:
+    Token keyword;
+    std::unique_ptr<Expr> value; // can be nullptr
+
+    Return(Token keyword, std::unique_ptr<Expr> &value) : keyword(keyword), value(std::move(value))
+    {
+    }
+
+    Return(Token keyword, std::unique_ptr<Expr> &&value) : keyword(keyword), value(std::move(value))
+    {
+    }
+
+    void accept(StmtVisitor &visitor) override
+    {
+        visitor.visitReturnStmt(*this);
+    }
+
+    std::unique_ptr<Stmt> clone() const override
+    {
+        return std::make_unique<Return>(keyword, value == nullptr ? nullptr : value->clone());
+    }
+};
+
 class If : public Stmt
 {
   public:
     std::unique_ptr<Expr> condition;
     std::unique_ptr<Stmt> thenBranch;
-    std::unique_ptr<Stmt> elseBranch;
+    std::unique_ptr<Stmt> elseBranch; // can be nullptr
 
     If(std::unique_ptr<Expr> &condition, std::unique_ptr<Stmt> &thenBranch, std::unique_ptr<Stmt> &elseBranch)
         : condition(std::move(condition)), thenBranch(std::move(thenBranch)), elseBranch(std::move(elseBranch))
@@ -58,7 +87,8 @@ class If : public Stmt
 
     std::unique_ptr<Stmt> clone() const override
     {
-        return std::make_unique<If>(condition->clone(), thenBranch->clone(), elseBranch->clone());
+        return std::make_unique<If>(condition->clone(), thenBranch->clone(),
+                                    elseBranch == nullptr ? nullptr : elseBranch->clone());
     }
 };
 class Break : public Stmt

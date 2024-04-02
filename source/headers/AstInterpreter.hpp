@@ -69,6 +69,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitExpressionStmt(const Expression &stmt) override;
     void visitIfStmt(const If &stmt) override;
     void visitWhileStmt(const While &stmt) override;
+    void visitReturnStmt(const Return &stmt) override;
     void visitBreakStmt(const Break &stmt) override;
     // Break reference: https://github.com/munificent/craftinginterpreters/issues/119
     void visitPrintStmt(const Print &stmt) override;

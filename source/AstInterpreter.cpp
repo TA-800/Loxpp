@@ -4,6 +4,7 @@
 #include "headers/LoxCallable.hpp"
 #include "headers/LoxFunction.hpp"
 #include "headers/Loxpp.hpp"
+#include "headers/ReturnException.hpp"
 #include "headers/RuntimeError.hpp"
 #include <iostream>
 #include <memory>
@@ -478,6 +479,19 @@ void AstInterpreter::visitWhileStmt(const While &stmt)
     }
 }
 
+void AstInterpreter::visitReturnStmt(const Return &stmt)
+{
+    std::shared_ptr<void> value = nullptr;
+    if (stmt.value != nullptr)
+    {
+        evaluate(stmt.value);
+        setResult(value, getResult(), getResultType());
+    }
+
+    // use exception to break out to a higher frame in the call stack
+    throw ReturnException(getResult(), getResultType());
+}
+
 void AstInterpreter::visitBreakStmt(const Break &stmt)
 {
     throw BreakError();
@@ -486,9 +500,6 @@ void AstInterpreter::visitBreakStmt(const Break &stmt)
 void AstInterpreter::visitPrintStmt(const Print &stmt)
 {
     bool successEval = evaluate(stmt.expression);
-    // don't print if evaluation of some expression (like undefined variable) was not successful
-    // error is thrown but caught by evaluate so stringifyResult line is still executed
-    // and will print whatever was the last successfully evaluated value stored by Interpreter
     if (successEval)
         std::cout << stringifyResult(result, type) << "\n";
 };
@@ -503,7 +514,6 @@ void AstInterpreter::visitBlockStmt(const Block &stmt)
 // Function declaration (not call)
 void AstInterpreter::visitFunctionStmt(const Function &stmt)
 {
-
     // Copy stmt to a new var ptr.
     std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
     std::shared_ptr<LoxCallable> function = std::make_shared<LoxFunction>(funcStmtPtr);
