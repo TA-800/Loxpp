@@ -39,6 +39,10 @@ int Loxpp::runFile(const std::string &path)
 // Interactive session
 void Loxpp::runPrompt()
 {
+    std::cout << "\n"
+              << "Lox++ 1.0"
+              << "\n\n";
+
     std::string line;
     /* std::vector<std::string> lines = { */
     /*     "var a = 1;", */

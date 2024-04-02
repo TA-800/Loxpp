@@ -27,3 +27,19 @@ Instead of employing templates (STL) which introduced too much complexity that I
 ### Differences
 
 Only 'false' and 'nil' are considered falsy in Lox, Lox++ also considers the number 0 and empty string as falsy values.
+
+## Usage
+
+### Download
+
+Go to Releases and download the executable if you'd like to give it a go.
+
+### Build
+
+1. Ensure you have a compiler for C++17.
+
+2. Clone the repository or download the source code.
+
+3. Run make clean then make.
+
+4. Run the executable in build/bin
