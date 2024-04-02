@@ -13,7 +13,7 @@ OBJS := $(patsubst $(SRCDIR)/%.cpp,$(OBJDIR)/%.o,$(SRCS))
 EXEC := $(BINDIR)/run
 
 # Compiler flags
-CFLAGS := -I$(SRCDIR)/headers -g -Wall -Wextra -pedantic -std=c++14 -v
+CFLAGS := -I$(SRCDIR)/headers -g -Wall -Wextra -pedantic -std=c++17
 
 # Default target
 all: $(EXEC)

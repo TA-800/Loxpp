@@ -4,6 +4,7 @@
 #include "Stmt.hpp"
 
 class AstInterpreter;
+class Environment;
 
 /*
  * Instances of this class represent Lox functions.
@@ -12,11 +13,13 @@ class AstInterpreter;
  */
 class LoxFunction
 {
-
   public:
     // clonable
     std::unique_ptr<Function> declaration;
-    LoxFunction(std::unique_ptr<Function> &declaration) : declaration(std::move(declaration))
+    std::shared_ptr<Environment> closure;
+
+    LoxFunction(std::unique_ptr<Function> &declaration, std::shared_ptr<Environment> &closure)
+        : declaration(std::move(declaration)), closure(closure)
     {
     }
 

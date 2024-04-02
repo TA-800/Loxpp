@@ -7,7 +7,6 @@
 #include "headers/RuntimeError.hpp"
 #include <iostream>
 #include <memory>
-#include <stdexcept>
 #include <utility>
 
 bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
@@ -520,8 +519,8 @@ void AstInterpreter::visitBlockStmt(const Block &stmt)
 void AstInterpreter::visitFunctionStmt(const Function &stmt)
 {
     // Copy stmt to a new var ptr.
-    std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
-    std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(funcStmtPtr);
+    std::unique_ptr<Function> funcDecl = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
+    std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(funcDecl, this->environment);
 
     environment->defineVar(stmt.name.getLexeme(), function, TokenInfo::Type::FUN);
 }

@@ -75,7 +75,7 @@ class Environment
 
                 std::unique_ptr<Function> clonedFunc =
                     std::unique_ptr<Function>(static_cast<Function *>(callable->declaration->clone().release()));
-                std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(clonedFunc);
+                std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(clonedFunc, callable->closure);
 
                 // Save the cloned function to the new environment
 

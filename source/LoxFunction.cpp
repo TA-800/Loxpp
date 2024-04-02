@@ -1,12 +1,13 @@
 #include "headers/LoxFunction.hpp"
 #include "headers/AstInterpreter.hpp"
+#include "headers/Environment.hpp"
 #include "headers/ReturnException.hpp"
 
 std::pair<std::shared_ptr<void>, TokenInfo::Type> LoxFunction::call(
     AstInterpreter &interpreter, const std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> &arguments)
 {
-    // Duplicate current environment and make it into new one for function onto which local params will be added
-    std::shared_ptr<Environment> funcEnv = interpreter.getGlobals()->clone();
+    // Make closure (the env that was active during function definition) the environment of the function execution
+    std::shared_ptr<Environment> funcEnv = std::make_shared<Environment>(closure);
 
     for (int i = 0; i < declaration->params.size(); i++)
     {
