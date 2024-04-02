@@ -1,5 +1,7 @@
 #include "headers/LoxFunction.hpp"
+#include "headers/AstInterpreter.hpp"
 #include "headers/ReturnException.hpp"
+
 
 std::pair<std::shared_ptr<void>, TokenInfo::Type> LoxFunction::call(
     AstInterpreter &interpreter, const std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> &arguments)

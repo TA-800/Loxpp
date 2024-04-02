@@ -11,7 +11,7 @@ class Environment
 {
 
     // Pointer to the enclosing environment.
-    const std::shared_ptr<Environment> enclosing;
+    std::shared_ptr<Environment> enclosing;
     // Don't use unique_ptr for enclosing because e.g. local env pointing to global env, local destroyed at some point,
     // global should still exist
 
@@ -77,6 +77,8 @@ class Environment
                 newEnv->defineVar(key, value.first, value.second);
             }
         }
+
+        return nullptr;
     }
 };
 

@@ -56,6 +56,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     // Get value from void pointer and set it to shared_ptr
     void setResult(std::shared_ptr<void> &toSet, std::shared_ptr<void> &toGet, TokenInfo::Type type);
 
+    /* -------------------- EXPRESSIONS -------------------- */
     void visitBinaryExpr(const Binary &expr) override;
     void visitUnaryExpr(const Unary &expr) override;
     void visitLiteralExpr(const Literal &expr) override;
@@ -65,7 +66,9 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitAssignExpr(const Assign &expr) override;
     void visitLogicalExpr(const Logical &expr) override;
     void visitCallExpr(const Call &expr) override;
+    /* ---------------------------------------------------- */
 
+    /* -------------------- STATEMENTS -------------------- */
     void visitExpressionStmt(const Expression &stmt) override;
     void visitIfStmt(const If &stmt) override;
     void visitWhileStmt(const While &stmt) override;
@@ -76,6 +79,7 @@ class AstInterpreter : public ExprVisitor, StmtVisitor
     void visitVarStmt(const Var &stmt) override;
     void visitBlockStmt(const Block &stmt) override;
     void visitFunctionStmt(const Function &stmt) override;
+    /* ---------------------------------------------------- */
 
     std::string stringifyResult(const std::shared_ptr<void> &result, TokenInfo::Type type);
     std::shared_ptr<Environment> &getGlobals()

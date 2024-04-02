@@ -1,7 +1,6 @@
 #include "headers/AstInterpreter.hpp"
 #include "headers/BreakError.hpp"
 #include "headers/Environment.hpp"
-#include "headers/LoxCallable.hpp"
 #include "headers/LoxFunction.hpp"
 #include "headers/Loxpp.hpp"
 #include "headers/ReturnException.hpp"
@@ -391,7 +390,7 @@ void AstInterpreter::visitCallExpr(const Call &expr)
     if (!isCallableType(calleeType))
         throw RuntimeError(expr.paren, "Can only call functions and classes.");
 
-    auto callable = std::static_pointer_cast<LoxCallable>(getResult());
+    auto callable = std::static_pointer_cast<LoxFunction>(getResult());
 
     // Evaluate argument expressions
     std::vector<std::pair<std::shared_ptr<void>, TokenInfo::Type>> arguments;
@@ -516,7 +515,7 @@ void AstInterpreter::visitFunctionStmt(const Function &stmt)
 {
     // Copy stmt to a new var ptr.
     std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
-    std::shared_ptr<LoxCallable> function = std::make_shared<LoxFunction>(funcStmtPtr);
+    std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(funcStmtPtr);
 
     // Also define it in variables hashmap (so visitVariableExpr knows it's a function)
     environment->defineVar(stmt.name.getLexeme(), function, TokenInfo::Type::FUN);
