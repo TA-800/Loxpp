@@ -1,27 +1,29 @@
 # Lox++
 
-This is a personal C++14 implementation of the Lox interpreter ( from the book "Crafting Interpreters" [ Java ] ).
+This is a personal C++ implementation of the Lox interpreter ( from the book "Crafting Interpreters" [ Java ] ).
 
 ## Features
 
-Challenges in the book to implement new features:
+In addition to the core functionalities, Lox++ brings the following capabilities
 
 1. Multiline nested comments
 
 2. String and number concatenation
 
-3. Break statement to quit loops early
+3. Break statement to exit loops prematurely
 
-## Notes
+## Implementation Details
 
-1. How was the Visitor pattern handled without templates?
+### Handling the Visitor Pattern
 
-The template system introduced too much complexity that I'm still not famililar with. Instead of using T type objects, I opted for void pointers and manually kept track of the value or object type to use typecasting on the pointer when its value was needed.
+Instead of employing templates (STL) which introduced too much complexity that I was still not familiar with yet, I utilized void pointers and an additional variables to keep track of value types to perform typecasting as needed to access values.
 
-2. Specifics about the implementation?
+### Modern C++ utilization
 
-Used modern C++ features like RAII (smart pointers) and more.
+1. RAII (smart pointers)
 
-3. Any differences from Lox in the book?
+2. Structured bindings
 
-Falsey values in Lox are only false or nil. Lox++ considers 0 and empty string as falsey values as well.
+### Differences
+
+Only 'false' and 'nil' are considered falsy in Lox, Lox++ also considers the number 0 and empty string as falsy values.
