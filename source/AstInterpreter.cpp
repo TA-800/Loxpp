@@ -7,6 +7,7 @@
 #include "headers/RuntimeError.hpp"
 #include <iostream>
 #include <memory>
+#include <stdexcept>
 #include <utility>
 
 bool AstInterpreter::isEqual(const std::shared_ptr<void> &left, const std::shared_ptr<void> &right,
@@ -108,13 +109,18 @@ void AstInterpreter::executeBlock(const std::vector<std::unique_ptr<Stmt>> &stat
             // Execute statements in the block with the local environment (scope)
             execute(statement);
         }
-    }
-    catch (RuntimeError &error)
-    {
-    }
 
-    // Restore the previous environment (scope) before exiting block (local) scope
-    this->environment = previous;
+        this->environment = previous;
+    }
+    catch (ReturnException &ret)
+    {
+        this->environment = previous;
+        throw ReturnException(ret.value, ret.type);
+    }
+    catch (RuntimeError &err)
+    {
+        this->environment = previous;
+    }
 }
 
 bool AstInterpreter::evaluate(const std::unique_ptr<Expr> &expr)
@@ -488,7 +494,7 @@ void AstInterpreter::visitReturnStmt(const Return &stmt)
     }
 
     // use exception to break out to a higher frame in the call stack
-    throw ReturnException(getResult(), getResultType());
+    throw ReturnException(value, type);
 }
 
 void AstInterpreter::visitBreakStmt(const Break &stmt)
@@ -517,7 +523,6 @@ void AstInterpreter::visitFunctionStmt(const Function &stmt)
     std::unique_ptr<Function> funcStmtPtr = std::unique_ptr<Function>(static_cast<Function *>(stmt.clone().release()));
     std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(funcStmtPtr);
 
-    // Also define it in variables hashmap (so visitVariableExpr knows it's a function)
     environment->defineVar(stmt.name.getLexeme(), function, TokenInfo::Type::FUN);
 }
 

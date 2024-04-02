@@ -1,6 +1,7 @@
 #ifndef ENVIRONMENT_HPP
 #define ENVIRONMENT_HPP
 
+#include "LoxFunction.hpp"
 #include "Token.hpp"
 #include <memory>
 #include <string>
@@ -18,6 +19,22 @@ class Environment
     // Store variables in a hash table.
     // Key: variable, Value: pair of value and type
     std::unordered_map<std::string, std::pair<std::shared_ptr<void>, TokenInfo::Type>> values;
+
+    std::shared_ptr<void> makeCopy(std::shared_ptr<void> &value, TokenInfo::Type type)
+    {
+        switch (type)
+        {
+        case TokenInfo::Type::STRING:
+            return std::make_shared<std::string>(*std::static_pointer_cast<std::string>(value));
+        case TokenInfo::Type::NUMBER:
+            return std::make_shared<double>(*std::static_pointer_cast<double>(value));
+        case TokenInfo::Type::TRUE:
+        case TokenInfo::Type::FALSE:
+            return std::make_shared<bool>(*std::static_pointer_cast<bool>(value));
+        default:
+            return nullptr;
+        }
+    }
 
   public:
     // For global environment.
@@ -40,45 +57,38 @@ class Environment
     void assign(Token name, std::shared_ptr<void> &value, TokenInfo::Type type);
 
     // Clone (for function calls)
-    std::shared_ptr<Environment> clone(std::shared_ptr<Environment> &toClone)
+    std::shared_ptr<Environment> clone()
     {
-        std::shared_ptr<Environment> newEnv = std::make_shared<Environment>(toClone->enclosing);
 
-        for (auto &[key, value] : toClone->values)
+        std::shared_ptr<Environment> newEnv = std::make_shared<Environment>(enclosing);
+
+        for (auto &[key, value] : values)
         {
-
             // If the value is a function, clone it.
             // This is necessary because functions have a unique_pointer to their declaration.
 
-            // TODO: Classes?
             if (value.second == TokenInfo::Type::FUN)
             {
-                // When saved to dict, it was upcasted to LoxCallable before casted to void
-                // So, we need to downcast it to LoxCallable before casting to LoxFunction
-
-                /* auto callable =
-                 * std::static_pointer_cast<LoxFunction>(std::static_pointer_cast<LoxCallable>(value.first)); */
+                auto callable = std::static_pointer_cast<LoxFunction>(value.first);
 
                 // Clone the function
 
-                /* std::unique_ptr<Function> clonedFunc = std::unique_ptr<Function>(static_cast<Function
-                 * *>(callable->declaration->clone().release())); */
-
-                // Create a new LoxFunction object with the cloned function (cast it to LoxCallable)
-
-                /* std::shared_ptr<LoxCallable> clonedCallable = std::make_shared<LoxFunction>(clonedFunc); */
+                std::unique_ptr<Function> clonedFunc =
+                    std::unique_ptr<Function>(static_cast<Function *>(callable->declaration->clone().release()));
+                std::shared_ptr<LoxFunction> function = std::make_shared<LoxFunction>(clonedFunc);
 
                 // Save the cloned function to the new environment
 
-                /* newEnv->defineVar(key, clonedCallable, TokenInfo::Type::FUN); */
+                newEnv->defineVar(key, function, TokenInfo::Type::FUN);
             }
             else
             {
-                newEnv->defineVar(key, value.first, value.second);
+                std::shared_ptr<void> valueCopy = makeCopy(value.first, value.second);
+                newEnv->defineVar(key, valueCopy, value.second);
             }
         }
 
-        return nullptr;
+        return newEnv;
     }
 };
 
