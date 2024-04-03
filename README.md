@@ -48,3 +48,9 @@ Go to Releases, download the executable and run it if you'd like to give Lox++ a
 ### Running it
 
 Path to a file as an argument will execute it in Lox++, otherwise no arguments will start REPL mode.
+
+
+## TODO
+
+1. Implement classes (sometime in the future).
+2. Functions that don't create or delete ptrs should accept regular ptrs instead of unique or shared.
