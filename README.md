@@ -54,3 +54,4 @@ Path to a file as an argument will execute it in Lox++, otherwise no arguments w
 
 1. Implement classes (sometime in the future).
 2. Functions that don't create or delete ptrs should accept regular ptrs instead of unique or shared.
+3. Resolution and binding
